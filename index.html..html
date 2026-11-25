@@ -1,0 +1,3274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Salón Lumen</title>
+
+  <!-- Metaetiquetas PWA para instalación en pantalla de inicio (Android / iPhone) -->
+  <meta name="theme-color" content="#FFFFFF" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Salón Lumen" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Playfair Display (editorial lujo) y Plus Jakarta Sans / Inter (UI limpia) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Configuración de paleta editorial: Blanco, Gris Perla y Dorado Champán -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+            serif: ['"Playfair Display"', 'serif'],
+          },
+          colors: {
+            pearl: {
+              50: '#FFFFFF',
+              100: '#F6F6F7',
+              200: '#ECECEF',
+              300: '#E5E5E8',
+            },
+            gold: {
+              50: '#FBF8F1',
+              100: '#F5EDE0',
+              200: '#E6D5B8',
+              300: '#D8BE8C',
+              400: '#CEAE6E',
+              500: '#C5A059',
+              600: '#AE8942',
+              700: '#8C6C30',
+            },
+            graphite: {
+              900: '#1F2024',
+              800: '#2E3036',
+              700: '#454851',
+              500: '#6B6E76',
+              400: '#9498A3',
+            }
+          },
+          boxShadow: {
+            soft: '0 6px 24px -6px rgba(31, 32, 36, 0.06)',
+            card: '0 2px 10px -2px rgba(31, 32, 36, 0.04)',
+            gold: '0 8px 24px -6px rgba(197, 160, 89, 0.35)',
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    body {
+      background-color: #F6F6F7;
+      color: #1F2024;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.25s ease-out forwards;
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .animate-pop-in {
+      animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body class="font-sans antialiased min-h-screen flex flex-col selection:bg-gold-100 selection:text-graphite-900 overflow-x-hidden">
+
+  <!-- ===================================================================== -->
+  <!-- OVERLAY DE CARGA INICIAL                                              -->
+  <!-- ===================================================================== -->
+  <div id="loading-overlay" class="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-6 transition-opacity duration-300">
+    <div id="loading-logo-slot" class="w-16 h-16 rounded-2xl bg-gold-50 border border-gold-200 flex items-center justify-center shadow-soft mb-4 overflow-hidden"></div>
+    <h2 class="font-serif text-xl font-semibold text-graphite-900 tracking-tight">Conectando Salón Lumen...</h2>
+    <p class="text-xs text-graphite-500 mt-1">Sincronizando agenda y fichas técnicas</p>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- PANTALLA / MODAL DE SELECCIÓN DE PERFIL Y PIN                         -->
+  <!-- ===================================================================== -->
+  <div id="profile-modal" class="fixed inset-0 z-40 bg-pearl-100/95 backdrop-blur-md hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-soft border border-pearl-300 p-6 sm:p-8 animate-pop-in my-auto">
+      <div class="text-center mb-6">
+        <div id="profile-logo-slot" class="mx-auto w-16 h-16 rounded-2xl bg-gold-50 border border-gold-200 flex items-center justify-center overflow-hidden mb-3 shadow-card"></div>
+        <h1 id="profile-salon-name" class="font-serif text-2xl font-bold text-graphite-900 tracking-tight">Salón Lumen</h1>
+        <p class="text-xs sm:text-sm text-graphite-500 mt-1">Selecciona tu perfil para ingresar</p>
+      </div>
+
+      <!-- Lista de Perfiles -->
+      <div id="profile-list-step" class="space-y-2.5"></div>
+
+      <!-- Paso de PIN para Administradora -->
+      <div id="profile-pin-step" class="hidden space-y-5">
+        <div class="flex items-center justify-between">
+          <button type="button" id="btn-back-profiles" class="text-xs sm:text-sm text-graphite-500 hover:text-graphite-900 flex items-center gap-1 p-1 -ml-1 rounded-lg transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+            Volver
+          </button>
+          <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-gold-50 text-gold-700 border border-gold-200">Acceso Administradora</span>
+        </div>
+
+        <div class="text-center">
+          <p class="text-sm font-semibold text-graphite-900">Ingresa tu PIN de 4 dígitos</p>
+          <p id="pin-hint-note" class="text-xs text-graphite-400 mt-1">PIN inicial por defecto: <span class="font-semibold text-graphite-700">1234</span> (editable en Ajustes)</p>
+        </div>
+
+        <div class="flex justify-center gap-3 my-2" id="pin-dots">
+          <div class="w-3.5 h-3.5 rounded-full border-2 border-gold-300 transition-all"></div>
+          <div class="w-3.5 h-3.5 rounded-full border-2 border-gold-300 transition-all"></div>
+          <div class="w-3.5 h-3.5 rounded-full border-2 border-gold-300 transition-all"></div>
+          <div class="w-3.5 h-3.5 rounded-full border-2 border-gold-300 transition-all"></div>
+        </div>
+        <p id="pin-error-msg" class="text-xs text-center text-red-600 font-medium h-4"></p>
+
+        <div class="grid grid-cols-3 gap-2.5 max-w-[240px] mx-auto">
+          <button type="button" data-pin="1" class="pin-key h-12 rounded-2xl bg-pearl-100 hover:bg-gold-50 hover:border-gold-200 border border-transparent active:scale-95 text-lg font-semibold text-graphite-900 transition">1</button>
+          <button type="button" data-pin="2" class="pin-key h-12 rounded-2xl bg-pearl-100 hover:bg-gold-50 hover:border-gold-200 border border-transparent active:scale-95 text-lg font-semibold text-graphite-900 transition">2</button>
+          <button type="button" data-pin="3" class="pin-key h-12 rounded-2xl bg-pearl-100 hover:bg-gold-50 hover:border-gold-200 border border-transparent active:scale-95 text-lg font-semibold text-graphite-900 transition">3</button>
+          <button type="button" data-pin="4" class="pin-key h-12 rounded-2xl bg-pearl-100 hover:bg-gold-50 hover:border-gold-200 border border-transparent active:scale-95 text-lg font-semibold text-graphite-900 transition">4</button>
+          <button type="button" data-pin="5" class="pin-key h-12 rounded-2xl bg-pearl-100 hover:bg-gold-50 hover:border-gold-200 border border-transparent active:scale-95 text-lg font-semibold text-graphite-900 transition">5</button>
+          <button type="button" data-pin="6" class="pin-key h-12 rounded-2xl bg-pearl-100 hover:bg-gold-50 hover:border-gold-200 border border-transparent active:scale-95 text-lg font-semibold text-graphite-900 transition">6</button>
+          <button type="button" data-pin="7" class="pin-key h-12 rounded-2xl bg-pearl-100 hover:bg-gold-50 hover:border-gold-200 border border-transparent active:scale-95 text-lg font-semibold text-graphite-900 transition">7</button>
+          <button type="button" data-pin="8" class="pin-key h-12 rounded-2xl bg-pearl-100 hover:bg-gold-50 hover:border-gold-200 border border-transparent active:scale-95 text-lg font-semibold text-graphite-900 transition">8</button>
+          <button type="button" data-pin="9" class="pin-key h-12 rounded-2xl bg-pearl-100 hover:bg-gold-50 hover:border-gold-200 border border-transparent active:scale-95 text-lg font-semibold text-graphite-900 transition">9</button>
+          <button type="button" id="pin-clear" class="h-12 rounded-2xl text-xs font-medium text-graphite-500 hover:bg-pearl-100 active:scale-95 transition">Limpiar</button>
+          <button type="button" data-pin="0" class="pin-key h-12 rounded-2xl bg-pearl-100 hover:bg-gold-50 hover:border-gold-200 border border-transparent active:scale-95 text-lg font-semibold text-graphite-900 transition">0</button>
+          <button type="button" id="pin-backspace" class="h-12 rounded-2xl flex items-center justify-center text-graphite-500 hover:bg-pearl-100 active:scale-95 transition" aria-label="Borrar">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75L14.25 12m0 0l2.25 2.25M14.25 12l2.25-2.25M14.25 12L12 14.25m-2.58 4.92l-6.375-6.375a1.125 1.125 0 010-1.59L9.42 4.83c.211-.211.498-.33.796-.33H19.5a2.25 2.25 0 012.25 2.25v10.5a2.25 2.25 0 01-2.25 2.25h-9.284c-.298 0-.585-.119-.796-.33z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <button type="button" id="btn-close-profile-modal" class="hidden mt-5 w-full py-2.5 text-sm font-medium text-graphite-500 hover:text-graphite-900 rounded-xl hover:bg-pearl-100 transition">
+        Cancelar
+      </button>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- BARRA SUPERIOR (HEADER)                                               -->
+  <!-- ===================================================================== -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-pearl-300">
+    <div class="max-w-6xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-3">
+      <!-- Marca con Logo Personalizable + Estado de sincronización -->
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div id="header-logo-slot" class="w-10 h-10 rounded-xl bg-gold-50 border border-gold-200 flex items-center justify-center shrink-0 overflow-hidden shadow-xs"></div>
+        <div class="min-w-0">
+          <h1 id="header-salon-name" class="font-serif text-base sm:text-lg font-bold text-graphite-900 truncate leading-tight tracking-tight">Salón Lumen</h1>
+          <div class="flex items-center gap-1.5 text-[11px] text-graphite-500">
+            <span id="sync-dot" class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+            <span id="sync-label" class="truncate">Conectando...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navegación Escritorio (md+) -->
+      <nav class="hidden md:flex items-center gap-1 bg-pearl-100 p-1 rounded-2xl border border-pearl-300/70">
+        <button type="button" data-nav="calendar" class="nav-btn-desktop px-3.5 py-2 rounded-xl text-sm font-medium transition flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+          Agenda
+        </button>
+        <button type="button" data-nav="sheets" class="nav-btn-desktop admin-only-el hidden px-3.5 py-2 rounded-xl text-sm font-medium transition flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/></svg>
+          Fichas Técnicas
+        </button>
+        <button type="button" data-nav="reports" class="nav-btn-desktop admin-only-el hidden px-3.5 py-2 rounded-xl text-sm font-medium transition flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
+          Reportes
+        </button>
+        <button type="button" data-nav="settings" class="nav-btn-desktop admin-only-el hidden px-3.5 py-2 rounded-xl text-sm font-medium transition flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          Ajustes
+        </button>
+      </nav>
+
+      <!-- Acciones derechas: Nueva cita + Perfil -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button type="button" id="btn-new-appt-desktop" class="hidden md:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-white text-sm font-semibold shadow-xs transition active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+          Nueva Cita
+        </button>
+
+        <button type="button" id="btn-switch-profile" class="flex items-center gap-2 pl-1.5 pr-2.5 py-1.5 rounded-full bg-pearl-100 hover:bg-pearl-200 border border-pearl-300 transition active:scale-95" title="Cambiar perfil">
+          <span id="active-profile-dot" class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-xs bg-gold-500">A</span>
+          <div class="text-left hidden sm:block">
+            <p id="active-profile-name" class="text-xs font-semibold text-graphite-900 leading-tight max-w-[96px] truncate">Perfil</p>
+            <p id="active-profile-role" class="text-[10px] text-graphite-500 leading-tight">Cambiar</p>
+          </div>
+          <svg class="w-3.5 h-3.5 text-graphite-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- CONTENIDO PRINCIPAL                                                   -->
+  <!-- ===================================================================== -->
+  <main class="flex-1 w-full max-w-6xl mx-auto px-3 sm:px-6 pt-5 pb-28 md:pb-10">
+
+    <!-- =================================================================== -->
+    <!-- VISTA 1: AGENDA / CALENDARIO COMPARTIDO                             -->
+    <!-- =================================================================== -->
+    <section id="view-calendar" class="space-y-4 animate-fade-in">
+      <div class="bg-white rounded-3xl p-4 shadow-card border border-pearl-300 space-y-3.5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <button type="button" id="cal-prev" class="w-9 h-9 rounded-xl bg-pearl-100 hover:bg-pearl-200 flex items-center justify-center text-graphite-700 transition active:scale-95" aria-label="Anterior">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+            </button>
+            <button type="button" id="cal-today" class="px-3 py-1.5 rounded-xl bg-pearl-100 hover:bg-pearl-200 text-xs font-semibold text-graphite-700 transition">
+              Hoy
+            </button>
+            <button type="button" id="cal-next" class="w-9 h-9 rounded-xl bg-pearl-100 hover:bg-pearl-200 flex items-center justify-center text-graphite-700 transition active:scale-95" aria-label="Siguiente">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+            </button>
+            <h2 id="cal-date-label" class="font-serif text-base sm:text-lg font-bold text-graphite-900 ml-1 capitalize"></h2>
+          </div>
+
+          <div class="inline-flex bg-pearl-100 p-1 rounded-2xl border border-pearl-300/60 w-full sm:w-auto">
+            <button type="button" data-calview="day" class="calview-btn flex-1 sm:flex-none px-4 py-1.5 rounded-xl text-xs font-semibold transition">Día</button>
+            <button type="button" data-calview="week" class="calview-btn flex-1 sm:flex-none px-4 py-1.5 rounded-xl text-xs font-semibold transition">Semana</button>
+            <button type="button" data-calview="month" class="calview-btn flex-1 sm:flex-none px-4 py-1.5 rounded-xl text-xs font-semibold transition">Mes</button>
+          </div>
+        </div>
+
+        <div id="worker-filter-bar" class="flex items-center gap-2 overflow-x-auto no-scrollbar pt-1"></div>
+      </div>
+
+      <div id="calendar-container" class="bg-white rounded-3xl shadow-card border border-pearl-300 overflow-hidden"></div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- VISTA 2: FICHAS TÉCNICAS DE SERVICIOS (SOLO ADMINISTRADORA)         -->
+    <!-- =================================================================== -->
+    <section id="view-sheets" class="hidden space-y-5 animate-fade-in">
+      <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-card border border-pearl-300 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="font-serif text-xl sm:text-2xl font-bold text-graphite-900">Fichas Técnicas de Servicios</h2>
+            <p class="text-xs sm:text-sm text-graphite-500">Costos de insumos, mano de obra y ganancia real neta por servicio</p>
+          </div>
+          <button type="button" id="btn-new-sheet" class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl bg-gold-500 hover:bg-gold-600 text-white text-xs sm:text-sm font-semibold shadow-xs transition active:scale-95 shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+            Nueva Ficha Técnica
+          </button>
+        </div>
+
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-3 border-t border-pearl-200">
+          <!-- Tasa de cambio rápida -->
+          <div class="flex flex-wrap items-center gap-2 bg-gold-50 border border-gold-200 px-3.5 py-2 rounded-2xl">
+            <span class="text-xs font-semibold text-graphite-700">Tasa de cambio:</span>
+            <span class="text-xs font-bold text-graphite-900">1 USD =</span>
+            <input type="number" id="quick-exchange-rate" min="1" step="1" class="w-20 px-2.5 py-1 rounded-xl border border-gold-200 bg-white text-xs font-bold text-graphite-900 text-center focus:outline-none focus:border-gold-500" />
+            <span class="text-xs font-bold text-graphite-900">CUP</span>
+            <button type="button" id="btn-apply-quick-rate" class="px-3 py-1 rounded-xl bg-graphite-900 hover:bg-graphite-700 text-white text-xs font-semibold transition active:scale-95">
+              Aplicar
+            </button>
+          </div>
+
+          <!-- Filtros de categoría y selector de vista -->
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div id="sheets-category-bar" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar"></div>
+
+            <div class="inline-flex bg-pearl-100 p-1 rounded-2xl border border-pearl-300/60 shrink-0">
+              <button type="button" data-sheetview="cards" class="sheetview-btn px-3 py-1.5 rounded-xl text-xs font-semibold transition">Tarjetas</button>
+              <button type="button" data-sheetview="table" class="sheetview-btn px-3 py-1.5 rounded-xl text-xs font-semibold transition">Comparativa</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="sheets-container"></div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- VISTA 3: REPORTES FINANCIEROS REALES (SOLO ADMINISTRADORA)          -->
+    <!-- =================================================================== -->
+    <section id="view-reports" class="hidden space-y-5 animate-fade-in">
+      <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-card border border-pearl-300 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 class="font-serif text-xl sm:text-2xl font-bold text-graphite-900">Reportes Financieros Reales</h2>
+            <p class="text-xs sm:text-sm text-graphite-500">Facturación, insumos, salarios y ganancia neta real (Tasa: <span id="rep-rate-badge" class="font-semibold text-graphite-700">990 CUP</span>)</p>
+          </div>
+          <button type="button" id="btn-open-whatsapp" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-graphite-900 hover:bg-graphite-800 text-white text-xs sm:text-sm font-semibold shadow-xs transition active:scale-95">
+            <svg class="w-4 h-4 text-gold-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/></svg>
+            Copiar / WhatsApp
+          </button>
+        </div>
+
+        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-2 border-t border-pearl-200">
+          <div class="inline-flex bg-pearl-100 p-1 rounded-2xl border border-pearl-300/60">
+            <button type="button" data-period="daily" class="period-btn flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-semibold transition">Diario</button>
+            <button type="button" data-period="weekly" class="period-btn flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-semibold transition">Semanal</button>
+            <button type="button" data-period="monthly" class="period-btn flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-semibold transition">Mensual</button>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between sm:justify-end gap-2">
+            <div class="flex items-center gap-1.5">
+              <button type="button" id="rep-prev" class="w-9 h-9 rounded-xl bg-pearl-100 hover:bg-pearl-200 flex items-center justify-center text-graphite-700 transition" aria-label="Período anterior">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+              </button>
+              <span id="rep-period-label" class="text-xs sm:text-sm font-semibold text-graphite-900 min-w-[140px] text-center capitalize"></span>
+              <button type="button" id="rep-next" class="w-9 h-9 rounded-xl bg-pearl-100 hover:bg-pearl-200 flex items-center justify-center text-graphite-700 transition" aria-label="Período siguiente">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+              </button>
+            </div>
+            <input type="date" id="rep-date-picker" class="px-2.5 py-1.5 rounded-xl border border-pearl-300 bg-pearl-100/60 text-xs font-medium text-graphite-700 focus:outline-none focus:border-gold-500" title="Ir a fecha" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Tarjetas KPI principales -->
+      <div id="report-global-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3"></div>
+
+      <!-- Gráfico visual comparativo: Facturación (Gris Grafito) vs Ganancia Real (Dorado) -->
+      <div class="bg-white rounded-3xl p-5 shadow-card border border-pearl-300">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <h3 class="font-serif text-lg font-bold text-graphite-900">Facturación vs. Ganancia Real por Trabajadora</h3>
+          <div class="flex items-center gap-3 text-[11px] font-medium text-graphite-500">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-graphite-700"></span>Facturación Bruta</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-gold-500"></span>Ganancia Real Neta</span>
+          </div>
+        </div>
+        <div id="report-bar-chart" class="space-y-4"></div>
+      </div>
+
+      <!-- Desglose detallado por trabajadora -->
+      <div>
+        <h3 class="font-serif text-lg font-bold text-graphite-900 mb-3 px-1">Desglose por Trabajadora</h3>
+        <div id="report-worker-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+      </div>
+
+      <!-- Tabla comparativa detallada -->
+      <div class="bg-white rounded-3xl shadow-card border border-pearl-300 overflow-hidden">
+        <div class="p-4 sm:p-5 border-b border-pearl-200">
+          <h3 class="font-serif text-base font-bold text-graphite-900">Resumen Contable del Período</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse min-w-[640px]">
+            <thead>
+              <tr class="bg-pearl-100 text-[11px] uppercase tracking-wider text-graphite-500 border-b border-pearl-300">
+                <th class="py-3 px-4 font-semibold">Trabajadora</th>
+                <th class="py-3 px-3 font-semibold text-center">Días / Clientas</th>
+                <th class="py-3 px-3 font-semibold text-right">Facturación</th>
+                <th class="py-3 px-3 font-semibold text-right">Insumos</th>
+                <th class="py-3 px-3 font-semibold text-right">Salario a Pagar</th>
+                <th class="py-3 px-4 font-semibold text-right text-gold-700">Ganancia Real</th>
+              </tr>
+            </thead>
+            <tbody id="report-table-body" class="divide-y divide-pearl-200 text-xs sm:text-sm"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- VISTA 4: AJUSTES (SOLO ADMINISTRADORA)                              -->
+    <!-- =================================================================== -->
+    <section id="view-settings" class="hidden space-y-5 animate-fade-in max-w-3xl mx-auto">
+      <div class="px-1">
+        <h2 class="font-serif text-2xl font-bold text-graphite-900">Configuración del Salón</h2>
+        <p class="text-sm text-graphite-500">Personaliza tu marca, logo, tasa de cambio, equipo y sincronización en la nube</p>
+      </div>
+
+      <!-- SECCIÓN: LOGO DEL SALÓN -->
+      <div class="bg-white rounded-3xl p-5 shadow-card border border-pearl-300 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h3 class="font-serif text-lg font-bold text-graphite-900">Logo del Salón</h3>
+            <p class="text-xs text-graphite-500">Se comprime automáticamente y se sincroniza en los teléfonos de todo el equipo</p>
+          </div>
+          <span class="self-start sm:self-auto text-[11px] font-semibold px-2.5 py-1 rounded-full bg-gold-50 text-gold-700 border border-gold-200">Máx. 256×256px</span>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center gap-5 p-4 rounded-2xl bg-pearl-100/70 border border-pearl-300/80">
+          <!-- Vista previa del logo -->
+          <div id="settings-logo-preview" class="w-20 h-20 rounded-2xl bg-white border border-gold-200 flex items-center justify-center overflow-hidden shadow-card shrink-0"></div>
+
+          <div class="flex-1 w-full space-y-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <label for="input-logo-upload" class="cursor-pointer inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-white text-xs font-semibold shadow-xs transition active:scale-95">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+                Subir imagen
+              </label>
+              <input type="file" id="input-logo-upload" accept="image/*" class="hidden" />
+
+              <button type="button" id="btn-reset-logo" class="px-3.5 py-2 rounded-xl bg-white hover:bg-pearl-200 text-graphite-700 text-xs font-semibold border border-pearl-300 transition">
+                Restaurar logo predeterminado
+              </button>
+            </div>
+
+            <!-- Selector de forma -->
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-semibold text-graphite-500">Forma:</span>
+              <div class="inline-flex bg-white p-1 rounded-xl border border-pearl-300">
+                <button type="button" data-logo-shape="square" class="logo-shape-btn px-3 py-1 rounded-lg text-xs font-semibold transition">Cuadrado redondeado</button>
+                <button type="button" data-logo-shape="circle" class="logo-shape-btn px-3 py-1 rounded-lg text-xs font-semibold transition">Circular</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Datos generales y tasa de cambio -->
+      <div class="bg-white rounded-3xl p-5 shadow-card border border-pearl-300 space-y-4">
+        <h3 class="font-serif text-lg font-bold text-graphite-900">Información General y Moneda</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-graphite-700 mb-1.5">Nombre del Salón</label>
+            <input type="text" id="set-salon-name" class="w-full px-3.5 py-2.5 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm" placeholder="Salón Lumen" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-graphite-700 mb-1.5">Tasa de Cambio (CUP por 1 USD)</label>
+            <div class="relative">
+              <input type="number" id="set-exchange-rate" min="1" step="1" class="w-full px-3.5 py-2.5 pr-14 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm font-bold" />
+              <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-graphite-400">CUP</span>
+            </div>
+            <p class="text-[11px] text-graphite-400 mt-1">Recalcula automáticamente todas las fichas técnicas y reportes</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Equipo de trabajadoras -->
+      <div class="bg-white rounded-3xl p-5 shadow-card border border-pearl-300 space-y-4">
+        <div>
+          <h3 class="font-serif text-lg font-bold text-graphite-900">Equipo del Salón</h3>
+          <p class="text-xs text-graphite-500">Edita los nombres y colores identificativos en la agenda</p>
+        </div>
+        <div id="set-workers-list" class="space-y-3"></div>
+      </div>
+
+      <!-- Seguridad: PIN de Administradora -->
+      <div class="bg-white rounded-3xl p-5 shadow-card border border-pearl-300 space-y-4">
+        <div>
+          <h3 class="font-serif text-lg font-bold text-graphite-900">Seguridad de Administradora</h3>
+          <p class="text-xs text-graphite-500">PIN numérico de 4 dígitos para acceder a Fichas Técnicas, Reportes y Ajustes</p>
+        </div>
+        <div class="max-w-xs">
+          <label class="block text-xs font-semibold text-graphite-700 mb-1.5">PIN de 4 dígitos</label>
+          <input type="password" inputmode="numeric" maxlength="4" id="set-admin-pin" class="w-full px-3.5 py-2.5 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm tracking-widest" placeholder="1234" />
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button type="button" id="btn-save-settings" class="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gold-500 hover:bg-gold-600 text-white font-semibold text-sm shadow-gold transition active:scale-95">
+          Guardar Configuración
+        </button>
+      </div>
+
+      <!-- SECCIÓN: SINCRONIZACIÓN EN LA NUBE Y CONEXIÓN FIREBASE PROPIA -->
+      <div class="bg-white rounded-3xl p-5 shadow-card border border-pearl-300 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h3 class="font-serif text-lg font-bold text-graphite-900">Sincronización en la Nube</h3>
+            <p class="text-xs text-graphite-500">Preconectado al proyecto oficial <span id="cloud-project-name" class="font-semibold text-graphite-900">salon-lumen-19861</span></p>
+          </div>
+          <div id="cloud-status-pill" class="self-start sm:self-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span id="cloud-status-dot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span id="cloud-status-text">Nube activa</span>
+          </div>
+        </div>
+
+        <!-- Aviso de diagnóstico en caso de que falte activar Auth Anónimo o Reglas de Firestore -->
+        <div id="cloud-error-banner" class="hidden p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs space-y-1">
+          <p class="font-bold">Configuración pendiente en Firebase Console</p>
+          <p id="cloud-error-detail" class="text-amber-800"></p>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-gold-50/70 border border-gold-200/80 flex items-start gap-2.5 text-xs text-graphite-700">
+          <svg class="w-4 h-4 text-gold-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <p>Esta aplicación ya incluye la conexión integrada al proyecto <strong>salon-lumen-19861</strong>. Todas las trabajadoras que abran el enlace se sincronizarán automáticamente en tiempo real sin necesidad de pegar claves.</p>
+        </div>
+
+        <!-- Desplegable opcional avanzado para cambiar de proyecto Firebase en el futuro -->
+        <details class="group rounded-2xl bg-pearl-100/80 border border-pearl-300 overflow-hidden">
+          <summary class="cursor-pointer list-none px-4 py-3 flex items-center justify-between text-xs font-semibold text-graphite-700 hover:text-graphite-900 select-none">
+            <span>Configuración avanzada: cambiar de proyecto Firebase</span>
+            <svg class="w-4 h-4 text-graphite-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+          </summary>
+
+          <div class="px-4 pb-4 pt-1 space-y-3 border-t border-pearl-200">
+            <p class="text-[11px] text-graphite-500">
+              Solo usa esta opción si algún día deseas migrar a otro proyecto de Firebase. Pega el objeto JSON <code class="px-1 py-0.5 rounded bg-white border border-pearl-300 text-graphite-800">firebaseConfig</code> aquí.
+            </p>
+
+            <textarea id="custom-firebase-json" rows="5" placeholder='{"apiKey": "...", "authDomain": "...", "projectId": "...", "storageBucket": "...", "messagingSenderId": "...", "appId": "..."}' class="w-full p-3 rounded-xl border border-pearl-300 bg-white font-mono text-[11px] text-graphite-900 focus:border-gold-500 focus:outline-none"></textarea>
+
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <button type="button" id="btn-clear-custom-fb" class="px-3.5 py-2 rounded-xl bg-white hover:bg-pearl-200 text-graphite-700 text-xs font-semibold border border-pearl-300 transition">
+                Usar proyecto oficial (salon-lumen-19861)
+              </button>
+              <button type="button" id="btn-save-custom-fb" class="px-4 py-2 rounded-xl bg-graphite-900 hover:bg-graphite-800 text-white text-xs font-semibold transition active:scale-95">
+                Guardar y Conectar
+              </button>
+            </div>
+          </div>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- NAVEGACIÓN INFERIOR FIJA (MÓVIL)                                      -->
+  <!-- ===================================================================== -->
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-pearl-300 px-1">
+    <div class="flex items-center justify-around h-16 max-w-lg mx-auto">
+      <button type="button" data-nav="calendar" class="nav-btn-mobile flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 rounded-xl transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+        <span class="text-[10px] font-semibold">Agenda</span>
+      </button>
+
+      <button type="button" data-nav="sheets" class="nav-btn-mobile admin-only-el hidden flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 rounded-xl transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/></svg>
+        <span class="text-[10px] font-semibold">Fichas</span>
+      </button>
+
+      <!-- Botón central dorado destacado: + Nueva Cita -->
+      <button type="button" id="btn-new-appt-mobile" class="flex flex-col items-center justify-center -mt-5 px-1">
+        <span class="w-12 h-12 rounded-2xl bg-gradient-to-br from-gold-400 to-gold-600 text-white flex items-center justify-center shadow-gold active:scale-95 transition">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        </span>
+        <span class="text-[10px] font-semibold text-gold-700 mt-1">Cita</span>
+      </button>
+
+      <button type="button" data-nav="reports" class="nav-btn-mobile admin-only-el hidden flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 rounded-xl transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
+        <span class="text-[10px] font-semibold">Reportes</span>
+      </button>
+
+      <button type="button" data-nav="settings" class="nav-btn-mobile admin-only-el hidden flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 rounded-xl transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span class="text-[10px] font-semibold">Ajustes</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL CREAR / EDITAR CITA                                             -->
+  <!-- ===================================================================== -->
+  <div id="appt-modal" class="fixed inset-0 z-50 bg-graphite-900/40 backdrop-blur-xs hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl border border-pearl-300 max-h-[92vh] flex flex-col overflow-hidden animate-pop-in">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-pearl-200 shrink-0">
+        <h3 id="appt-modal-title" class="font-serif text-xl font-bold text-graphite-900">Nueva Cita</h3>
+        <button type="button" id="btn-close-appt-modal" class="w-8 h-8 rounded-full bg-pearl-100 hover:bg-pearl-200 flex items-center justify-center text-graphite-700 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="appt-form" class="p-5 space-y-4 overflow-y-auto flex-1">
+        <input type="hidden" id="appt-id" />
+        <input type="hidden" id="appt-service-id" />
+
+        <!-- Alerta visual de solapamiento -->
+        <div id="overlap-warning" class="hidden p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs flex items-start gap-2.5">
+          <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+          <div>
+            <p class="font-bold">¡Atención! Horario solapado</p>
+            <p id="overlap-warning-detail" class="mt-0.5 text-amber-800"></p>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-graphite-700 mb-1.5">Nombre de la clienta *</label>
+          <input type="text" id="appt-client" required placeholder="Ej. Laura Martínez" class="w-full px-3.5 py-2.5 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-graphite-700 mb-1.5">Trabajadora asignada *</label>
+          <div id="appt-worker-selector" class="grid grid-cols-3 gap-2"></div>
+          <input type="hidden" id="appt-worker-id" required />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-graphite-700 mb-1.5">Fecha *</label>
+            <input type="date" id="appt-date" required class="w-full px-3.5 py-2.5 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-graphite-700 mb-1.5">Hora de inicio *</label>
+            <input type="time" id="appt-start" required class="w-full px-3.5 py-2.5 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm" />
+          </div>
+        </div>
+
+        <!-- Servicio conectado a Fichas Técnicas -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs font-semibold text-graphite-700">Servicio *</label>
+            <span id="appt-linked-badge" class="hidden text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gold-50 text-gold-700 border border-gold-200">Vinculado a ficha</span>
+          </div>
+          <div id="service-quick-chips" class="flex flex-wrap gap-1.5 mb-2"></div>
+          <input type="text" id="appt-service" required placeholder="Selecciona un servicio o escribe uno personalizado..." class="w-full px-3.5 py-2.5 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm" />
+        </div>
+
+        <!-- Duración -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs font-semibold text-graphite-700">Duración *</label>
+            <span id="appt-end-preview" class="text-xs font-medium text-gold-700 bg-gold-50 border border-gold-200 px-2 py-0.5 rounded-lg">Fin: --:--</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5 mb-2">
+            <button type="button" data-min="30" class="dur-btn px-2.5 py-1.5 rounded-xl text-xs font-medium bg-pearl-100 text-graphite-700 hover:bg-gold-50 transition">30 min</button>
+            <button type="button" data-min="60" class="dur-btn px-2.5 py-1.5 rounded-xl text-xs font-medium bg-pearl-100 text-graphite-700 hover:bg-gold-50 transition">1h</button>
+            <button type="button" data-min="90" class="dur-btn px-2.5 py-1.5 rounded-xl text-xs font-medium bg-pearl-100 text-graphite-700 hover:bg-gold-50 transition">1h 30m</button>
+            <button type="button" data-min="105" class="dur-btn px-2.5 py-1.5 rounded-xl text-xs font-medium bg-pearl-100 text-graphite-700 hover:bg-gold-50 transition">1h 45m</button>
+            <button type="button" data-min="120" class="dur-btn px-2.5 py-1.5 rounded-xl text-xs font-medium bg-pearl-100 text-graphite-700 hover:bg-gold-50 transition">2h</button>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="number" id="appt-duration" required min="10" max="600" step="5" value="90" class="w-24 px-3 py-2 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm" />
+            <span class="text-xs text-graphite-500">minutos</span>
+          </div>
+        </div>
+
+        <!-- Precio en USD (con equivalente CUP) y Estado -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="text-xs font-semibold text-graphite-700">Precio (USD) *</label>
+              <span id="appt-cup-preview" class="text-[11px] font-medium text-graphite-500">0 CUP</span>
+            </div>
+            <input type="number" id="appt-price" required min="0" step="0.01" placeholder="0.00" class="w-full px-3.5 py-2.5 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm font-semibold" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-graphite-700 mb-1.5">Estado</label>
+            <select id="appt-status" class="w-full px-3.5 py-2.5 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm">
+              <option value="pendiente">Pendiente</option>
+              <option value="completada">Completada</option>
+              <option value="cancelada">Cancelada</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-graphite-700 mb-1.5">Notas opcionales</label>
+          <textarea id="appt-notes" rows="2" placeholder="Curvatura, diseño, preferencias..." class="w-full px-3.5 py-2 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm resize-none"></textarea>
+        </div>
+
+        <!-- Confirmación de eliminación inline -->
+        <div id="delete-confirm-box" class="hidden p-3.5 rounded-2xl bg-red-50 border border-red-200 space-y-2">
+          <p class="text-xs font-semibold text-red-800">¿Seguro que deseas eliminar esta cita permanentemente?</p>
+          <div class="flex gap-2">
+            <button type="button" id="btn-confirm-delete" class="px-3 py-1.5 rounded-xl bg-red-600 text-white text-xs font-semibold hover:bg-red-700">Sí, eliminar</button>
+            <button type="button" id="btn-cancel-delete" class="px-3 py-1.5 rounded-xl bg-white text-graphite-700 text-xs font-semibold border border-pearl-300">Cancelar</button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between gap-3 pt-2">
+          <button type="button" id="btn-ask-delete" class="hidden px-4 py-2.5 rounded-xl text-red-600 hover:bg-red-50 text-sm font-semibold transition">
+            Eliminar
+          </button>
+          <div class="flex items-center gap-2 ml-auto">
+            <button type="button" id="btn-cancel-appt" class="px-4 py-2.5 rounded-xl bg-pearl-100 hover:bg-pearl-200 text-graphite-700 text-sm font-semibold transition">
+              Cancelar
+            </button>
+            <button type="submit" class="px-6 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-white text-sm font-semibold shadow-xs transition active:scale-95">
+              Guardar Cita
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL EDITOR DE FICHA TÉCNICA (SOLO ADMINISTRADORA)                   -->
+  <!-- ===================================================================== -->
+  <div id="sheet-modal" class="fixed inset-0 z-50 bg-graphite-900/50 backdrop-blur-xs hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-2xl rounded-t-3xl sm:rounded-3xl shadow-2xl border border-pearl-300 max-h-[94vh] flex flex-col overflow-hidden animate-pop-in">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-pearl-200 shrink-0">
+        <div>
+          <h3 id="sheet-modal-title" class="font-serif text-xl font-bold text-graphite-900">Ficha Técnica de Servicio</h3>
+          <p class="text-xs text-graphite-500">Calcula automáticamente insumos, salario y ganancia neta real</p>
+        </div>
+        <button type="button" id="btn-close-sheet-modal" class="w-8 h-8 rounded-full bg-pearl-100 hover:bg-pearl-200 flex items-center justify-center text-graphite-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="sheet-form" class="p-4 sm:p-5 space-y-5 overflow-y-auto flex-1">
+        <input type="hidden" id="sheet-id" />
+
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+          <div class="sm:col-span-5">
+            <label class="block text-xs font-semibold text-graphite-700 mb-1">Nombre del servicio *</label>
+            <input type="text" id="sheet-name" required placeholder="Ej. Pestañas 5.5 USD" class="w-full px-3.5 py-2.5 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm font-medium" />
+          </div>
+          <div class="sm:col-span-3">
+            <label class="block text-xs font-semibold text-graphite-700 mb-1">Categoría</label>
+            <select id="sheet-category" class="w-full px-3 py-2.5 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm">
+              <option value="Pestañas">Pestañas</option>
+              <option value="Cejas">Cejas</option>
+              <option value="Uñas">Uñas</option>
+              <option value="Cabello">Cabello</option>
+              <option value="Otros">Otros</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-graphite-700 mb-1">Duración (min)</label>
+            <input type="number" id="sheet-duration" required min="5" step="5" value="90" class="w-full px-3 py-2.5 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-graphite-700 mb-1">Precio (USD) *</label>
+            <input type="number" id="sheet-price" required min="0" step="0.01" placeholder="5.50" class="w-full px-3 py-2.5 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm font-bold text-graphite-900" />
+            <p id="sheet-price-cup" class="text-[10px] font-medium text-graphite-400 mt-0.5 text-right">0 CUP</p>
+          </div>
+        </div>
+
+        <!-- Tabla dinámica de Insumos -->
+        <div class="space-y-2.5">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-sm font-bold text-graphite-900">Insumos del Servicio</h4>
+              <p class="text-[11px] text-graphite-500">Costo por clienta = Costo envase ÷ Usos por clienta</p>
+            </div>
+            <button type="button" id="btn-add-supply-row" class="px-3 py-1.5 rounded-xl bg-gold-50 hover:bg-gold-100 text-gold-700 border border-gold-200 text-xs font-semibold transition">
+              + Agregar Insumo
+            </button>
+          </div>
+
+          <div class="rounded-2xl border border-pearl-300 overflow-hidden bg-pearl-100/50">
+            <div class="hidden sm:grid grid-cols-12 gap-2 px-3 py-2 bg-pearl-100 text-[11px] font-semibold text-graphite-500 uppercase border-b border-pearl-300">
+              <div class="col-span-5">Insumo</div>
+              <div class="col-span-2 text-right">Caja (USD)</div>
+              <div class="col-span-2 text-right">Usos</div>
+              <div class="col-span-2 text-right">Por Clienta</div>
+              <div class="col-span-1"></div>
+            </div>
+            <div id="sheet-supplies-list" class="divide-y divide-pearl-200 p-2 sm:p-0 space-y-2 sm:space-y-0"></div>
+          </div>
+        </div>
+
+        <!-- Mano de Obra -->
+        <div class="p-4 rounded-2xl bg-pearl-100/70 border border-pearl-300 space-y-3">
+          <h4 class="text-sm font-bold text-graphite-900">Mano de Obra / Salario de Trabajadora</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+            <div class="sm:col-span-6">
+              <label class="block text-xs font-semibold text-graphite-700 mb-1">Modalidad de pago</label>
+              <select id="sheet-labor-type" class="w-full px-3 py-2.5 rounded-xl border border-pearl-300 bg-white text-sm focus:border-gold-500 focus:outline-none">
+                <option value="fixed_cup">Monto fijo en CUP</option>
+                <option value="percent">Porcentaje del precio (%)</option>
+                <option value="fixed_usd">Monto fijo en USD</option>
+              </select>
+            </div>
+            <div class="sm:col-span-3">
+              <label id="sheet-labor-val-label" class="block text-xs font-semibold text-graphite-700 mb-1">Valor (CUP)</label>
+              <input type="number" id="sheet-labor-value" required min="0" step="any" value="1000" class="w-full px-3 py-2.5 rounded-xl border border-pearl-300 bg-white text-sm font-bold focus:border-gold-500 focus:outline-none" />
+            </div>
+            <div class="sm:col-span-3 p-2.5 rounded-xl bg-white border border-pearl-300 text-right">
+              <p class="text-[10px] font-semibold text-graphite-400 uppercase">Salario Calculado</p>
+              <p id="sheet-labor-preview-usd" class="text-xs font-bold text-graphite-900">$0.00</p>
+              <p id="sheet-labor-preview-cup" class="text-[10px] text-graphite-500">0 CUP</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Resumen Financiero en Tiempo Real -->
+        <div class="p-4 rounded-2xl bg-graphite-900 text-white space-y-3 border border-graphite-800">
+          <div class="flex items-center justify-between border-b border-white/10 pb-2">
+            <span class="text-xs font-semibold uppercase tracking-wider text-pearl-300">Resumen Financiero por Clienta</span>
+            <span id="sum-margin-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-gold-500/20 text-gold-300 border border-gold-400/30">Margen: 0%</span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div>
+              <p class="text-graphite-400 text-[11px]">Insumos</p>
+              <p id="sum-supplies-usd" class="font-bold text-sm mt-0.5">$0.0000</p>
+              <p id="sum-supplies-cup" class="text-[11px] text-graphite-400">0 CUP</p>
+            </div>
+            <div>
+              <p class="text-graphite-400 text-[11px]">Mano de Obra</p>
+              <p id="sum-labor-usd" class="font-bold text-sm mt-0.5">$0.0000</p>
+              <p id="sum-labor-cup" class="text-[11px] text-graphite-400">0 CUP</p>
+            </div>
+            <div>
+              <p class="text-graphite-400 text-[11px]">Costo Total</p>
+              <p id="sum-total-cost-usd" class="font-bold text-sm mt-0.5 text-pearl-200">$0.0000</p>
+              <p id="sum-total-cost-cup" class="text-[11px] text-graphite-400">0 CUP</p>
+            </div>
+            <div class="bg-gold-500/15 border border-gold-400/40 rounded-xl p-2 -m-1">
+              <p class="text-gold-300 text-[11px] font-semibold">Ganancia Real</p>
+              <p id="sum-profit-usd" class="font-bold text-base text-gold-300 mt-0.5">$0.0000</p>
+              <p id="sum-profit-cup" class="text-[11px] text-gold-200 font-medium">0 CUP</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Confirmación inline de eliminación -->
+        <div id="sheet-delete-confirm" class="hidden p-3.5 rounded-2xl bg-red-50 border border-red-200 space-y-2">
+          <p class="text-xs font-semibold text-red-800">¿Eliminar esta ficha técnica? Las citas ya registradas conservarán su nombre y precio.</p>
+          <div class="flex gap-2">
+            <button type="button" id="btn-confirm-del-sheet" class="px-3 py-1.5 rounded-xl bg-red-600 text-white text-xs font-semibold">Sí, eliminar</button>
+            <button type="button" id="btn-cancel-del-sheet" class="px-3 py-1.5 rounded-xl bg-white text-graphite-700 text-xs font-semibold border border-pearl-300">Cancelar</button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between gap-2 pt-2">
+          <button type="button" id="btn-ask-del-sheet" class="hidden px-4 py-2.5 rounded-xl text-red-600 hover:bg-red-50 text-sm font-semibold transition">
+            Eliminar
+          </button>
+          <div class="flex items-center gap-2 ml-auto">
+            <button type="button" id="btn-cancel-sheet" class="px-4 py-2.5 rounded-xl bg-pearl-100 hover:bg-pearl-200 text-graphite-700 text-sm font-semibold transition">
+              Cancelar
+            </button>
+            <button type="submit" class="px-6 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-white text-sm font-semibold shadow-xs transition active:scale-95">
+              Guardar Ficha
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL RESUMEN WHATSAPP (SOLO ADMIN)                                   -->
+  <!-- ===================================================================== -->
+  <div id="whatsapp-modal" class="fixed inset-0 z-50 bg-graphite-900/40 backdrop-blur-xs hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-pearl-300 overflow-hidden animate-pop-in">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-pearl-200">
+        <h3 class="font-serif text-lg font-bold text-graphite-900">Resumen para WhatsApp</h3>
+        <button type="button" id="btn-close-whatsapp" class="w-8 h-8 rounded-full bg-pearl-100 hover:bg-pearl-200 flex items-center justify-center text-graphite-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="p-5 space-y-4">
+        <textarea id="whatsapp-text" readonly rows="14" class="w-full p-3.5 rounded-2xl bg-pearl-100 border border-pearl-300 text-xs font-mono text-graphite-900 focus:outline-none"></textarea>
+        <div class="flex gap-2">
+          <button type="button" id="btn-copy-whatsapp" class="flex-1 py-3 rounded-2xl bg-gold-500 hover:bg-gold-600 text-white text-sm font-semibold transition active:scale-95">
+            Copiar texto
+          </button>
+          <a id="btn-share-whatsapp-link" href="#" target="_blank" rel="noopener noreferrer" class="px-4 py-3 rounded-2xl bg-graphite-900 hover:bg-graphite-800 text-white text-sm font-semibold transition flex items-center justify-center">
+            Abrir WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- CONTENEDOR DE NOTIFICACIONES TOAST                                    -->
+  <!-- ===================================================================== -->
+  <div id="toast-container" class="fixed top-20 right-4 left-4 sm:left-auto sm:w-80 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ===================================================================== -->
+  <!-- LÓGICA DE LA APLICACIÓN + FIREBASE EN TIEMPO REAL                     -->
+  <!-- ===================================================================== -->
+  <script type="module">
+    import { initializeApp, deleteApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // =========================================================================
+    // 1. CONSTANTES, ISOTIPO SVG Y FICHAS TÉCNICAS REALES DE "SALÓN LUMEN"
+    // =========================================================================
+
+    // Configuración oficial integrada de Firebase (Proyecto: salon-lumen-19861)
+    const DEFAULT_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyABI0MZp5oHPAqBOhKyermCZLYn_YO56vA",
+      authDomain: "salon-lumen-19861.firebaseapp.com",
+      projectId: "salon-lumen-19861",
+      storageBucket: "salon-lumen-19861.firebasestorage.app",
+      messagingSenderId: "856566735493",
+      appId: "1:856566735493:web:20a8fc2aaeb674ec90bfec",
+      measurementId: "G-C2SKG4DN2M"
+    };
+
+    const FIXED_CLOUD_APP_ID = 'salon-lumen-19861';
+
+    const PALETTE_COLORS = [
+      { name: 'Dorado Champán', hex: '#C5A059' },
+      { name: 'Grafito', hex: '#4B5563' },
+      { name: 'Bronce Suave', hex: '#A67C6D' },
+      { name: 'Gris Pizarra', hex: '#64748B' },
+      { name: 'Oro Antiguo', hex: '#9A7B3E' },
+      { name: 'Carbón', hex: '#2D3139' },
+      { name: 'Arena Oscura', hex: '#8D7B68' }
+    ];
+
+    // Isotipo editorial dorado minimalista por defecto (SVG)
+    const DEFAULT_LOGO_SVG = `
+      <svg class="w-3/4 h-3/4 text-gold-500" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="32" cy="32" r="27" stroke="currentColor" stroke-width="1.6" stroke-opacity="0.45"/>
+        <path d="M32 10L35.4 26.6L52 30L35.4 33.4L32 50L28.6 33.4L12 30L28.6 26.6L32 10Z" fill="currentColor" fill-opacity="0.16" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        <circle cx="32" cy="30" r="2.6" fill="currentColor"/>
+      </svg>
+    `;
+
+    // Claves de respaldo para alojamiento externo y modo sin conexión
+    const STORAGE_KEYS = {
+      customFb: 'salon_lumen_custom_firebase_cfg',
+      backupConfig: 'salon_lumen_backup_config',
+      backupAppts: 'salon_lumen_backup_appts'
+    };
+
+    function safeStorageGet(key) {
+      try {
+        const raw = window.localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function safeStorageSet(key, val) {
+      try {
+        if (val === null) window.localStorage.removeItem(key);
+        else window.localStorage.setItem(key, JSON.stringify(val));
+      } catch {
+        // Ignorar si el iframe bloquea almacenamiento
+      }
+    }
+
+    function makeLashSupplies(lashBoxCost) {
+      return [
+        { name: 'Parches', boxCost: 0.30, uses: 1 },
+        { name: 'Lash Shampoo', boxCost: 3.40, uses: 20 },
+        { name: 'Cinta de MicroPoro', boxCost: 1.25, uses: 15 },
+        { name: 'Primer', boxCost: 2.00, uses: 55 },
+        { name: 'Superbonder', boxCost: 8.50, uses: 55 },
+        { name: 'Pestaña', boxCost: lashBoxCost, uses: 3.5 },
+        { name: 'Pegamento', boxCost: 28.00, uses: 30 },
+        { name: 'Cepillo', boxCost: 2.25, uses: 50 }
+      ];
+    }
+
+    const DEFAULT_TECH_SHEETS = [
+      {
+        id: 'sheet_pestanas_55',
+        name: 'Pestañas (5.5 USD)',
+        category: 'Pestañas',
+        duration: 90,
+        priceUsd: 5.50,
+        laborType: 'fixed_cup',
+        laborValue: 1000,
+        supplies: makeLashSupplies(5.50)
+      },
+      {
+        id: 'sheet_pestanas_58',
+        name: 'Pestañas (5.8 USD)',
+        category: 'Pestañas',
+        duration: 90,
+        priceUsd: 5.80,
+        laborType: 'fixed_cup',
+        laborValue: 1000,
+        supplies: makeLashSupplies(6.00)
+      },
+      {
+        id: 'sheet_pestanas_60',
+        name: 'Pestañas (6.0 USD)',
+        category: 'Pestañas',
+        duration: 105,
+        priceUsd: 6.00,
+        laborType: 'fixed_cup',
+        laborValue: 1000,
+        supplies: makeLashSupplies(7.00)
+      },
+      {
+        id: 'sheet_pestanas_65',
+        name: 'Pestañas (6.5 USD)',
+        category: 'Pestañas',
+        duration: 120,
+        priceUsd: 6.50,
+        laborType: 'fixed_cup',
+        laborValue: 1200,
+        supplies: makeLashSupplies(7.50)
+      },
+      {
+        id: 'sheet_pestanas_70',
+        name: 'Pestañas (7.0 USD)',
+        category: 'Pestañas',
+        duration: 120,
+        priceUsd: 7.00,
+        laborType: 'fixed_cup',
+        laborValue: 1200,
+        supplies: makeLashSupplies(8.50)
+      },
+      {
+        id: 'sheet_cejas',
+        name: 'Cejas',
+        category: 'Cejas',
+        duration: 30,
+        priceUsd: 1.50,
+        laborType: 'percent',
+        laborValue: 30,
+        supplies: [
+          { name: 'Algodón', boxCost: 1.50, uses: 150 },
+          { name: 'Hilo para Bisagismo', boxCost: 3.00, uses: 20 },
+          { name: 'Tinte', boxCost: 6.50, uses: 30 },
+          { name: 'Cuchilla', boxCost: 0.05, uses: 10 },
+          { name: 'Cera', boxCost: 27.00, uses: 150 },
+          { name: 'Gel Hidratante', boxCost: 1.00, uses: 100 },
+          { name: 'Aplicador', boxCost: 2.40, uses: 600 },
+          { name: 'Toallas Húmedas', boxCost: 1.00, uses: 100 },
+          { name: 'Cotón', boxCost: 1.20, uses: 50 }
+        ]
+      }
+    ];
+
+    const DEFAULT_CONFIG = {
+      salonName: 'Salón Lumen',
+      logoDataUrl: '',
+      logoShape: 'square', // 'square' | 'circle'
+      exchangeRate: 990,
+      adminPin: '1234',
+      workers: [
+        { id: 'w1', name: 'Administradora', role: 'admin', color: '#C5A059' },
+        { id: 'w2', name: 'Trabajadora 1', role: 'worker', color: '#4B5563' },
+        { id: 'w3', name: 'Trabajadora 2', role: 'worker', color: '#A67C6D' }
+      ],
+      techSheets: DEFAULT_TECH_SHEETS
+    };
+
+    const state = {
+      user: null,
+      db: null,
+      unsubConfig: null,
+      unsubAppts: null,
+      appId: FIXED_CLOUD_APP_ID,
+      activeProjectId: DEFAULT_FIREBASE_CONFIG.projectId,
+      useFirebase: false,
+      firebaseMode: 'connecting', // 'cloud' | 'custom_cloud' | 'error' | 'local'
+      firebaseErrorHint: '',
+      config: JSON.parse(JSON.stringify(DEFAULT_CONFIG)),
+      appointments: [],
+      activeProfile: null,
+      currentNav: 'calendar',
+      calendarView: 'day',
+      selectedDate: new Date(),
+      workerFilter: 'all',
+      sheetCategoryFilter: 'Todas',
+      sheetViewMode: 'cards',
+      draftSupplies: [],
+      reportPeriod: 'weekly',
+      reportDate: new Date(),
+      pinBuffer: '',
+      pendingAdminProfile: null
+    };
+
+    // =========================================================================
+    // 2. RENDERIZADO Y COMPRESIÓN DEL LOGO PERSONALIZABLE
+    // =========================================================================
+    function renderLogoInSlot(el, sizeClass = 'w-10 h-10') {
+      if (!el) return;
+      const isCircle = state.config.logoShape === 'circle';
+      const radiusClass = isCircle ? 'rounded-full' : (sizeClass.includes('w-20') || sizeClass.includes('w-16') ? 'rounded-2xl' : 'rounded-xl');
+
+      el.classList.remove('rounded-full', 'rounded-2xl', 'rounded-xl');
+      el.classList.add(radiusClass);
+
+      if (state.config.logoDataUrl) {
+        el.innerHTML = `<img src="${state.config.logoDataUrl}" alt="Logo ${escapeHtml(state.config.salonName)}" class="w-full h-full object-cover" />`;
+      } else {
+        el.innerHTML = DEFAULT_LOGO_SVG;
+      }
+    }
+
+    function updateAllLogoSlots() {
+      renderLogoInSlot(document.getElementById('loading-logo-slot'), 'w-16 h-16');
+      renderLogoInSlot(document.getElementById('profile-logo-slot'), 'w-16 h-16');
+      renderLogoInSlot(document.getElementById('header-logo-slot'), 'w-10 h-10');
+      renderLogoInSlot(document.getElementById('settings-logo-preview'), 'w-20 h-20');
+    }
+
+    // Comprime y recorta la imagen a máximo 256x256px en JPEG ligero para Firestore
+    function compressLogoFile(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('No se pudo leer la imagen'));
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onerror = () => reject(new Error('Formato de imagen no válido'));
+          img.onload = () => {
+            const maxDim = 256;
+            const size = Math.min(img.width, img.height);
+            const sx = (img.width - size) / 2;
+            const sy = (img.height - size) / 2;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = maxDim;
+            canvas.height = maxDim;
+            const ctx = canvas.getContext('2d');
+            // Fondo blanco para PNGs transparentes
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, maxDim, maxDim);
+            ctx.drawImage(img, sx, sy, size, size, 0, 0, maxDim, maxDim);
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+            resolve(dataUrl);
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // =========================================================================
+    // 3. UTILIDADES FINANCIERAS, DE FECHA Y FORMATO
+    // =========================================================================
+    function getRate() {
+      return Number(state.config.exchangeRate) > 0 ? Number(state.config.exchangeRate) : 990;
+    }
+
+    function fmtUsd(val, decimals = 2) {
+      const n = Number(val) || 0;
+      return `$${n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
+    }
+
+    function fmtCup(val) {
+      const n = Number(val) || 0;
+      return `${n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CUP`;
+    }
+
+    function fmtCupShort(val) {
+      const n = Number(val) || 0;
+      return `${Math.round(n).toLocaleString('es-ES')} CUP`;
+    }
+
+    function calcSheetFinancials(sheet, overridePriceUsd = null) {
+      const rate = getRate();
+      const priceUsd = overridePriceUsd !== null ? (Number(overridePriceUsd) || 0) : (Number(sheet.priceUsd) || 0);
+
+      const suppliesUsd = (sheet.supplies || []).reduce((sum, item) => {
+        const box = Number(item.boxCost) || 0;
+        const uses = Number(item.uses) || 0;
+        return sum + (uses > 0 ? box / uses : 0);
+      }, 0);
+
+      let laborUsd = 0;
+      const lVal = Number(sheet.laborValue) || 0;
+      if (sheet.laborType === 'fixed_cup') {
+        laborUsd = lVal / rate;
+      } else if (sheet.laborType === 'percent') {
+        laborUsd = priceUsd * (lVal / 100);
+      } else {
+        laborUsd = lVal;
+      }
+
+      const totalCostUsd = suppliesUsd + laborUsd;
+      const profitUsd = priceUsd - totalCostUsd;
+      const marginPct = priceUsd > 0 ? (profitUsd / priceUsd) * 100 : 0;
+
+      return {
+        priceUsd,
+        priceCup: priceUsd * rate,
+        suppliesUsd,
+        suppliesCup: suppliesUsd * rate,
+        laborUsd,
+        laborCup: laborUsd * rate,
+        totalCostUsd,
+        totalCostCup: totalCostUsd * rate,
+        profitUsd,
+        profitCup: profitUsd * rate,
+        marginPct
+      };
+    }
+
+    function calcAppointmentFinancials(appt) {
+      const rate = getRate();
+      const priceUsd = Number(appt.price) || 0;
+
+      const sheets = state.config.techSheets || [];
+      let sheet = appt.serviceId ? sheets.find(s => s.id === appt.serviceId) : null;
+      if (!sheet && appt.service) {
+        const norm = appt.service.trim().toLowerCase();
+        sheet = sheets.find(s => s.name.trim().toLowerCase() === norm) || null;
+      }
+
+      if (sheet) {
+        return { ...calcSheetFinancials(sheet, priceUsd), linked: true, sheet };
+      }
+
+      return {
+        priceUsd,
+        priceCup: priceUsd * rate,
+        suppliesUsd: 0,
+        suppliesCup: 0,
+        laborUsd: 0,
+        laborCup: 0,
+        totalCostUsd: 0,
+        totalCostCup: 0,
+        profitUsd: priceUsd,
+        profitCup: priceUsd * rate,
+        marginPct: priceUsd > 0 ? 100 : 0,
+        linked: false,
+        sheet: null
+      };
+    }
+
+    function toLocalDateStr(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function parseLocalDate(str) {
+      const [y, m, d] = str.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function timeToMinutes(timeStr) {
+      if (!timeStr) return 0;
+      const [h, m] = timeStr.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    function minutesToTime(totalMin) {
+      const h = Math.floor(totalMin / 60) % 24;
+      const m = totalMin % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+
+    function formatTime12h(timeStr) {
+      if (!timeStr) return '';
+      const [h, m] = timeStr.split(':').map(Number);
+      const period = h >= 12 ? 'PM' : 'AM';
+      const h12 = h % 12 === 0 ? 12 : h % 12;
+      return `${h12}:${String(m).padStart(2, '0')} ${period}`;
+    }
+
+    function formatDuration(mins) {
+      const m = Number(mins) || 0;
+      if (m < 60) return `${m} min`;
+      const h = Math.floor(m / 60);
+      const rem = m % 60;
+      return rem === 0 ? `${h}h` : `${h}h ${rem}m`;
+    }
+
+    function getStartOfWeek(date) {
+      const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const day = d.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      d.setDate(d.getDate() + diff);
+      return d;
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function getWorkerById(id) {
+      return state.config.workers.find(w => w.id === id) || state.config.workers[0];
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const colors = {
+        success: 'bg-graphite-900 text-white border border-gold-500/40',
+        error: 'bg-red-600 text-white',
+        warning: 'bg-amber-600 text-white'
+      };
+      toast.className = `${colors[type] || colors.success} px-4 py-3 rounded-2xl shadow-lg text-xs sm:text-sm font-medium flex items-center gap-2 pointer-events-auto animate-fade-in`;
+      toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // =========================================================================
+    // 4. SINCRONIZACIÓN EN LA NUBE CON FIREBASE + CONEXIÓN PROPIA + FALLBACK
+    // =========================================================================
+    function updateSyncIndicators() {
+      const syncDot = document.getElementById('sync-dot');
+      const syncLabel = document.getElementById('sync-label');
+      const pill = document.getElementById('cloud-status-pill');
+      const pillDot = document.getElementById('cloud-status-dot');
+      const pillText = document.getElementById('cloud-status-text');
+      const projectEl = document.getElementById('cloud-project-name');
+      const errBanner = document.getElementById('cloud-error-banner');
+      const errDetail = document.getElementById('cloud-error-detail');
+
+      if (projectEl) projectEl.textContent = state.activeProjectId || FIXED_CLOUD_APP_ID;
+
+      if (errBanner && errDetail) {
+        if (state.firebaseErrorHint) {
+          errDetail.textContent = state.firebaseErrorHint;
+          errBanner.classList.remove('hidden');
+        } else {
+          errBanner.classList.add('hidden');
+        }
+      }
+
+      if (state.firebaseMode === 'custom_cloud') {
+        syncDot.className = 'w-2 h-2 rounded-full bg-emerald-500 shrink-0';
+        syncLabel.textContent = 'Nube propia activa';
+        if (pill) {
+          pill.className = 'self-start sm:self-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200';
+          pillDot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+          pillText.textContent = `Conectado (${state.activeProjectId})`;
+        }
+      } else if (state.firebaseMode === 'cloud') {
+        syncDot.className = 'w-2 h-2 rounded-full bg-emerald-500 shrink-0';
+        syncLabel.textContent = 'Nube activa';
+        if (pill) {
+          pill.className = 'self-start sm:self-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200';
+          pillDot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+          pillText.textContent = 'Sincronizado en vivo';
+        }
+      } else if (state.firebaseMode === 'error') {
+        syncDot.className = 'w-2 h-2 rounded-full bg-amber-500 shrink-0';
+        syncLabel.textContent = 'Revisar Firebase';
+        if (pill) {
+          pill.className = 'self-start sm:self-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300';
+          pillDot.className = 'w-2 h-2 rounded-full bg-amber-500';
+          pillText.textContent = 'Requiere configuración en Firebase';
+        }
+      } else {
+        syncDot.className = 'w-2 h-2 rounded-full bg-gold-500 shrink-0';
+        syncLabel.textContent = 'Modo local';
+        if (pill) {
+          pill.className = 'self-start sm:self-auto inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-gold-50 text-gold-700 border border-gold-200';
+          pillDot.className = 'w-2 h-2 rounded-full bg-gold-500';
+          pillText.textContent = 'Modo local sin conexión';
+        }
+      }
+    }
+
+    async function initFirebase() {
+      // Limpiar suscripciones previas si reconectamos
+      if (state.unsubConfig) { state.unsubConfig(); state.unsubConfig = null; }
+      if (state.unsubAppts) { state.unsubAppts(); state.unsubAppts = null; }
+      state.firebaseErrorHint = '';
+
+      try {
+        // Prioridad 1: configuración manual personalizada en localStorage
+        // Prioridad 2: configuración oficial integrada DEFAULT_FIREBASE_CONFIG (salon-lumen-19861)
+        const customCfg = safeStorageGet(STORAGE_KEYS.customFb);
+        let firebaseConfig = DEFAULT_FIREBASE_CONFIG;
+        let isCustom = false;
+
+        if (customCfg && customCfg.apiKey && customCfg.projectId) {
+          firebaseConfig = customCfg;
+          isCustom = true;
+        }
+
+        state.appId = FIXED_CLOUD_APP_ID;
+        state.activeProjectId = firebaseConfig.projectId || FIXED_CLOUD_APP_ID;
+
+        // Eliminar instancia previa si existiera al reconectar
+        for (const existingApp of getApps()) {
+          await deleteApp(existingApp);
+        }
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        state.db = getFirestore(app);
+
+        // Autenticación anónima automática antes de cualquier lectura/escritura
+        await signInAnonymously(auth);
+
+        state.user = auth.currentUser;
+        state.useFirebase = true;
+        state.firebaseMode = isCustom ? 'custom_cloud' : 'cloud';
+        updateSyncIndicators();
+        subscribeRealtimeData();
+      } catch (err) {
+        console.warn('Error inicializando Firebase:', err.code || err.message);
+        state.useFirebase = false;
+
+        if (err.code === 'auth/operation-not-allowed' || err.code === 'auth/admin-restricted-operation') {
+          state.firebaseMode = 'error';
+          state.firebaseErrorHint = 'Falta activar el inicio de sesión Anónimo: ve a Firebase Console → Authentication → Sign-in method → habilita "Anónimo".';
+          showToast('Activa Authentication Anónimo en Firebase Console', 'warning');
+        } else {
+          state.firebaseMode = 'local';
+          state.firebaseErrorHint = 'No se pudo conectar con la nube. Verifica tu conexión a Internet o las credenciales de Firebase.';
+        }
+        updateSyncIndicators();
+
+        const cachedCfg = safeStorageGet(STORAGE_KEYS.backupConfig);
+        if (cachedCfg) {
+          state.config = mergeConfigWithDefaults(cachedCfg);
+        }
+        const cachedAppts = safeStorageGet(STORAGE_KEYS.backupAppts);
+        if (Array.isArray(cachedAppts) && cachedAppts.length > 0) {
+          state.appointments = cachedAppts;
+        } else {
+          seedDemoAppointmentsIfEmpty();
+        }
+        finishInitialLoad();
+      }
+    }
+
+    function mergeConfigWithDefaults(data) {
+      return {
+        salonName: data.salonName || DEFAULT_CONFIG.salonName,
+        logoDataUrl: typeof data.logoDataUrl === 'string' ? data.logoDataUrl : '',
+        logoShape: data.logoShape === 'circle' ? 'circle' : 'square',
+        exchangeRate: Number(data.exchangeRate) > 0 ? Number(data.exchangeRate) : DEFAULT_CONFIG.exchangeRate,
+        adminPin: data.adminPin || DEFAULT_CONFIG.adminPin,
+        workers: Array.isArray(data.workers) && data.workers.length === 3 ? data.workers : DEFAULT_CONFIG.workers,
+        techSheets: Array.isArray(data.techSheets) && data.techSheets.length > 0 ? data.techSheets : DEFAULT_TECH_SHEETS
+      };
+    }
+
+    function subscribeRealtimeData() {
+      if (!state.user || !state.db) return;
+
+      let configLoaded = false;
+      let apptsLoaded = false;
+
+      const checkReady = () => {
+        if (configLoaded && apptsLoaded) finishInitialLoad();
+      };
+
+      // REGLA 1: Ruta pública estricta para configuración, logo y fichas técnicas
+      const configRef = doc(state.db, 'artifacts', state.appId, 'public', 'data', 'settings', 'lumen_config');
+      state.unsubConfig = onSnapshot(
+        configRef,
+        (snap) => {
+          if (snap.exists()) {
+            state.config = mergeConfigWithDefaults(snap.data());
+            safeStorageSet(STORAGE_KEYS.backupConfig, state.config);
+          } else {
+            setDoc(configRef, DEFAULT_CONFIG).catch(e => console.error('Error guardando config inicial:', e));
+          }
+
+          if (state.activeProfile) {
+            const updated = state.config.workers.find(w => w.id === state.activeProfile.id);
+            if (updated) state.activeProfile = updated;
+          }
+
+          configLoaded = true;
+          updateHeaderUI();
+          renderAllActiveViews();
+          checkReady();
+        },
+        (error) => {
+          console.error('Error escuchando configuración:', error);
+          if (error?.code === 'permission-denied') {
+            state.firebaseMode = 'error';
+            state.firebaseErrorHint = 'Permiso denegado en Firestore: verifica en Firebase Console → Firestore Database → Reglas que hayas publicado "allow read, write: if request.auth != null;".';
+            updateSyncIndicators();
+            showToast('Revisa las Reglas de Firestore en Firebase Console', 'warning');
+          } else {
+            showToast('Error al sincronizar ajustes con la nube', 'error');
+          }
+          configLoaded = true;
+          checkReady();
+        }
+      );
+
+      // REGLA 1 & 2: Colección pública de citas sin consultas compuestas
+      const apptsCol = collection(state.db, 'artifacts', state.appId, 'public', 'data', 'appointments');
+      state.unsubAppts = onSnapshot(
+        apptsCol,
+        (snapshot) => {
+          const list = [];
+          snapshot.forEach((docSnap) => {
+            list.push({ id: docSnap.id, ...docSnap.data() });
+          });
+          list.sort((a, b) => {
+            if (a.date !== b.date) return (a.date || '').localeCompare(b.date || '');
+            return (a.startTime || '').localeCompare(b.startTime || '');
+          });
+          state.appointments = list;
+          safeStorageSet(STORAGE_KEYS.backupAppts, list);
+          apptsLoaded = true;
+          renderAllActiveViews();
+          checkReady();
+        },
+        (error) => {
+          console.error('Error escuchando citas:', error);
+          if (error?.code === 'permission-denied') {
+            state.firebaseMode = 'error';
+            state.firebaseErrorHint = 'Permiso denegado en Firestore: publica las Reglas en Firebase Console → Firestore Database → Reglas.';
+            updateSyncIndicators();
+          } else {
+            showToast('Error al sincronizar citas', 'error');
+          }
+          apptsLoaded = true;
+          checkReady();
+        }
+      );
+    }
+
+    async function persistConfig(newConfig, toastMsg = 'Cambios guardados') {
+      state.config = newConfig;
+      safeStorageSet(STORAGE_KEYS.backupConfig, newConfig);
+
+      if (state.activeProfile) {
+        const updated = state.config.workers.find(w => w.id === state.activeProfile.id);
+        if (updated) state.activeProfile = updated;
+      }
+
+      try {
+        if (state.useFirebase && state.user && state.db) {
+          const configRef = doc(state.db, 'artifacts', state.appId, 'public', 'data', 'settings', 'lumen_config');
+          await setDoc(configRef, newConfig);
+        }
+        updateHeaderUI();
+        renderAllActiveViews();
+        if (toastMsg) showToast(toastMsg);
+      } catch (err) {
+        console.error('Error guardando configuración:', err);
+        showToast('Guardado localmente (error de nube)', 'warning');
+      }
+    }
+
+    function seedDemoAppointmentsIfEmpty() {
+      if (state.appointments.length > 0) return;
+      const today = toLocalDateStr(new Date());
+      state.appointments = [
+        {
+          id: 'demo1',
+          clientName: 'María Elena',
+          workerId: 'w1',
+          date: today,
+          startTime: '09:00',
+          duration: 90,
+          serviceId: 'sheet_pestanas_55',
+          service: 'Pestañas (5.5 USD)',
+          price: 5.50,
+          status: 'completada',
+          notes: 'Curvatura C natural'
+        },
+        {
+          id: 'demo2',
+          clientName: 'Claudia Reyes',
+          workerId: 'w2',
+          date: today,
+          startTime: '10:00',
+          duration: 120,
+          serviceId: 'sheet_pestanas_65',
+          service: 'Pestañas (6.5 USD)',
+          price: 6.50,
+          status: 'completada',
+          notes: 'Efecto volumen medio'
+        },
+        {
+          id: 'demo3',
+          clientName: 'Valeria Gómez',
+          workerId: 'w3',
+          date: today,
+          startTime: '11:00',
+          duration: 30,
+          serviceId: 'sheet_cejas',
+          service: 'Cejas',
+          price: 1.50,
+          status: 'pendiente',
+          notes: 'Diseño con hilo y tinte castaño'
+        }
+      ];
+      safeStorageSet(STORAGE_KEYS.backupAppts, state.appointments);
+    }
+
+    let initialLoadDone = false;
+    function finishInitialLoad() {
+      if (initialLoadDone) {
+        updateHeaderUI();
+        renderAllActiveViews();
+        return;
+      }
+      initialLoadDone = true;
+      updateHeaderUI();
+      const overlay = document.getElementById('loading-overlay');
+      overlay.classList.add('opacity-0');
+      setTimeout(() => overlay.classList.add('hidden'), 300);
+
+      openProfileModal(false);
+    }
+
+    // =========================================================================
+    // 5. CONTROL DE PERFILES Y PRIVACIDAD
+    // =========================================================================
+    function openProfileModal(allowCancel = true) {
+      const modal = document.getElementById('profile-modal');
+      const listStep = document.getElementById('profile-list-step');
+      const pinStep = document.getElementById('profile-pin-step');
+      const closeBtn = document.getElementById('btn-close-profile-modal');
+
+      document.getElementById('profile-salon-name').textContent = state.config.salonName;
+      updateAllLogoSlots();
+
+      listStep.classList.remove('hidden');
+      pinStep.classList.add('hidden');
+      state.pinBuffer = '';
+      state.pendingAdminProfile = null;
+      updatePinDots();
+      document.getElementById('pin-error-msg').textContent = '';
+
+      document.getElementById('pin-hint-note').classList.toggle('hidden', state.config.adminPin !== '1234');
+      closeBtn.classList.toggle('hidden', !(allowCancel && state.activeProfile));
+
+      listStep.innerHTML = state.config.workers.map((w) => {
+        const isAdmin = w.role === 'admin';
+        const initial = (w.name || 'T').charAt(0).toUpperCase();
+        return `
+          <button type="button" data-select-profile="${w.id}" class="w-full flex items-center justify-between p-3.5 rounded-2xl border border-pearl-300 hover:border-gold-400 hover:bg-gold-50/50 transition text-left active:scale-[0.99]">
+            <div class="flex items-center gap-3.5">
+              <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-white font-bold text-base shadow-xs" style="background-color:${w.color}">
+                ${escapeHtml(initial)}
+              </div>
+              <div>
+                <p class="font-semibold text-graphite-900 text-sm">${escapeHtml(w.name)}</p>
+                <p class="text-xs text-graphite-500">${isAdmin ? 'Administradora · Control total' : 'Trabajadora · Solo agenda'}</p>
+              </div>
+            </div>
+            <div class="text-graphite-400">
+              ${isAdmin
+                ? '<svg class="w-5 h-5 text-gold-500" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>'
+                : '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>'
+              }
+            </div>
+          </button>
+        `;
+      }).join('');
+
+      listStep.querySelectorAll('[data-select-profile]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const worker = getWorkerById(btn.dataset.selectProfile);
+          if (worker.role === 'admin') {
+            state.pendingAdminProfile = worker;
+            state.pinBuffer = '';
+            updatePinDots();
+            document.getElementById('pin-error-msg').textContent = '';
+            listStep.classList.add('hidden');
+            pinStep.classList.remove('hidden');
+          } else {
+            activateProfile(worker);
+          }
+        });
+      });
+
+      modal.classList.remove('hidden');
+    }
+
+    function updatePinDots() {
+      document.querySelectorAll('#pin-dots div').forEach((dot, idx) => {
+        if (idx < state.pinBuffer.length) {
+          dot.classList.add('bg-gold-500', 'border-gold-500', 'scale-110');
+          dot.classList.remove('border-gold-300');
+        } else {
+          dot.classList.remove('bg-gold-500', 'border-gold-500', 'scale-110');
+          dot.classList.add('border-gold-300');
+        }
+      });
+    }
+
+    function handlePinDigit(digit) {
+      if (state.pinBuffer.length >= 4) return;
+      state.pinBuffer += digit;
+      updatePinDots();
+      document.getElementById('pin-error-msg').textContent = '';
+
+      if (state.pinBuffer.length === 4) {
+        if (state.pinBuffer === String(state.config.adminPin)) {
+          activateProfile(state.pendingAdminProfile);
+        } else {
+          document.getElementById('pin-error-msg').textContent = 'PIN incorrecto. Inténtalo de nuevo.';
+          setTimeout(() => {
+            state.pinBuffer = '';
+            updatePinDots();
+          }, 350);
+        }
+      }
+    }
+
+    function activateProfile(worker) {
+      state.activeProfile = worker;
+      document.getElementById('profile-modal').classList.add('hidden');
+
+      const isAdmin = worker.role === 'admin';
+      document.querySelectorAll('.admin-only-el').forEach(el => {
+        el.classList.toggle('hidden', !isAdmin);
+      });
+
+      if (!isAdmin && state.currentNav !== 'calendar') {
+        switchNav('calendar');
+      } else {
+        switchNav(state.currentNav);
+      }
+
+      updateHeaderUI();
+      showToast(`Bienvenida, ${worker.name}`);
+    }
+
+    function updateHeaderUI() {
+      document.getElementById('header-salon-name').textContent = state.config.salonName;
+      updateAllLogoSlots();
+      if (state.activeProfile) {
+        const dot = document.getElementById('active-profile-dot');
+        dot.style.backgroundColor = state.activeProfile.color;
+        dot.textContent = (state.activeProfile.name || 'U').charAt(0).toUpperCase();
+        document.getElementById('active-profile-name').textContent = state.activeProfile.name;
+        document.getElementById('active-profile-role').textContent = state.activeProfile.role === 'admin' ? 'Administradora' : 'Trabajadora';
+      }
+    }
+
+    // =========================================================================
+    // 6. NAVEGACIÓN PRINCIPAL
+    // =========================================================================
+    function switchNav(target) {
+      const isAdmin = state.activeProfile?.role === 'admin';
+      if (target !== 'calendar' && !isAdmin) target = 'calendar';
+      state.currentNav = target;
+
+      ['calendar', 'sheets', 'reports', 'settings'].forEach(v => {
+        document.getElementById(`view-${v}`).classList.toggle('hidden', target !== v);
+      });
+
+      document.querySelectorAll('.nav-btn-desktop').forEach(btn => {
+        const active = btn.dataset.nav === target;
+        const isAdminTab = btn.dataset.nav !== 'calendar';
+        btn.className = `nav-btn-desktop ${isAdminTab ? 'admin-only-el' : ''} ${!isAdmin && isAdminTab ? 'hidden' : ''} px-3.5 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-1.5 ${
+          active ? 'bg-white text-gold-600 shadow-xs border border-gold-200/70' : 'text-graphite-500 hover:text-graphite-900'
+        }`;
+      });
+
+      document.querySelectorAll('.nav-btn-mobile').forEach(btn => {
+        const active = btn.dataset.nav === target;
+        btn.classList.toggle('text-gold-600', active);
+        btn.classList.toggle('text-graphite-400', !active);
+      });
+
+      renderAllActiveViews();
+    }
+
+    function renderAllActiveViews() {
+      if (!state.activeProfile) return;
+      if (state.currentNav === 'calendar') renderCalendar();
+      if (state.currentNav === 'sheets' && state.activeProfile.role === 'admin') renderTechSheets();
+      if (state.currentNav === 'reports' && state.activeProfile.role === 'admin') renderReports();
+      if (state.currentNav === 'settings' && state.activeProfile.role === 'admin') renderSettings();
+    }
+
+    // =========================================================================
+    // 7. AGENDA / CALENDARIO COMPARTIDO
+    // =========================================================================
+    function getFilteredAppointments() {
+      if (state.workerFilter === 'all') return state.appointments;
+      return state.appointments.filter(a => a.workerId === state.workerFilter);
+    }
+
+    function renderWorkerFilterBar() {
+      const bar = document.getElementById('worker-filter-bar');
+      const allActive = state.workerFilter === 'all';
+      let html = `
+        <button type="button" data-filter="all" class="shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition border ${
+          allActive ? 'bg-graphite-900 text-white border-graphite-900' : 'bg-pearl-100 text-graphite-700 border-pearl-300 hover:bg-pearl-200'
+        }">Todas</button>
+      `;
+
+      state.config.workers.forEach(w => {
+        const active = state.workerFilter === w.id;
+        html += `
+          <button type="button" data-filter="${w.id}" class="shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition border ${
+            active ? 'text-white shadow-xs' : 'bg-white text-graphite-700 border-pearl-300 hover:bg-pearl-100'
+          }" style="${active ? `background-color:${w.color}; border-color:${w.color}` : ''}">
+            <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color:${active ? '#ffffff' : w.color}"></span>
+            ${escapeHtml(w.name)}
+          </button>
+        `;
+      });
+
+      bar.innerHTML = html;
+      bar.querySelectorAll('[data-filter]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.workerFilter = btn.dataset.filter;
+          renderCalendar();
+        });
+      });
+    }
+
+    function renderCalendar() {
+      renderWorkerFilterBar();
+
+      document.querySelectorAll('.calview-btn').forEach(btn => {
+        const active = btn.dataset.calview === state.calendarView;
+        btn.className = `calview-btn flex-1 sm:flex-none px-4 py-1.5 rounded-xl text-xs font-semibold transition ${
+          active ? 'bg-white text-gold-600 shadow-xs border border-gold-200/60' : 'text-graphite-500 hover:text-graphite-900'
+        }`;
+      });
+
+      const label = document.getElementById('cal-date-label');
+      const d = state.selectedDate;
+
+      if (state.calendarView === 'day') {
+        label.textContent = d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+        renderDayView();
+      } else if (state.calendarView === 'week') {
+        const start = getStartOfWeek(d);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        label.textContent = `${start.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} – ${end.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`;
+        renderWeekView(start);
+      } else {
+        label.textContent = d.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+        renderMonthView();
+      }
+    }
+
+    function renderDayView() {
+      const container = document.getElementById('calendar-container');
+      const dateStr = toLocalDateStr(state.selectedDate);
+      const dayAppts = getFilteredAppointments().filter(a => a.date === dateStr);
+      const startHour = 8;
+      const endHour = 20;
+      const hourHeight = 68;
+      const totalHeight = (endHour - startHour + 1) * hourHeight;
+
+      const workersToShow = state.workerFilter === 'all'
+        ? state.config.workers
+        : state.config.workers.filter(w => w.id === state.workerFilter);
+
+      let html = `
+        <div class="p-3 sm:p-4 border-b border-pearl-200 flex items-center justify-between bg-pearl-100/50">
+          <span class="text-xs font-semibold text-graphite-500">${dayAppts.length} ${dayAppts.length === 1 ? 'cita agendada' : 'citas agendadas'}</span>
+          <button type="button" id="btn-quick-add-day" class="text-xs font-semibold text-gold-600 hover:text-gold-700">+ Agendar este día</button>
+        </div>
+        <div class="overflow-x-auto">
+          <div class="min-w-[520px]">
+            <div class="grid border-b border-pearl-300 bg-white sticky top-0 z-10" style="grid-template-columns: 58px repeat(${workersToShow.length}, minmax(0, 1fr));">
+              <div class="p-2.5 text-[11px] font-semibold text-graphite-400 text-center border-r border-pearl-200">Hora</div>
+              ${workersToShow.map(w => `
+                <div class="p-2.5 flex items-center justify-center gap-1.5 border-r border-pearl-200 last:border-r-0">
+                  <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color:${w.color}"></span>
+                  <span class="text-xs font-bold text-graphite-900 truncate">${escapeHtml(w.name)}</span>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="grid relative" style="grid-template-columns: 58px repeat(${workersToShow.length}, minmax(0, 1fr)); height: ${totalHeight}px;">
+              <div class="border-r border-pearl-200 relative bg-pearl-100/40">
+                ${Array.from({ length: endHour - startHour + 1 }, (_, i) => `
+                  <div class="absolute inset-x-0 text-[11px] font-medium text-graphite-400 text-center -mt-2" style="top:${i * hourHeight}px">${String(startHour + i).padStart(2, '0')}:00</div>
+                `).join('')}
+              </div>
+
+              ${workersToShow.map(w => {
+                const wAppts = dayAppts.filter(a => a.workerId === w.id);
+                return `
+                  <div class="relative border-r border-pearl-200 last:border-r-0">
+                    ${Array.from({ length: endHour - startHour + 1 }, (_, i) => {
+                      const timeVal = `${String(startHour + i).padStart(2, '0')}:00`;
+                      return `<div data-slot-worker="${w.id}" data-slot-time="${timeVal}" class="slot-cell absolute inset-x-0 border-t border-pearl-200 hover:bg-gold-50/50 cursor-pointer transition" style="top:${i * hourHeight}px; height:${hourHeight}px"></div>`;
+                    }).join('')}
+
+                    ${wAppts.map(a => {
+                      const startMin = timeToMinutes(a.startTime);
+                      const dur = Number(a.duration) || 60;
+                      const topPx = Math.max(0, ((startMin - startHour * 60) / 60) * hourHeight);
+                      const heightPx = Math.max(38, (dur / 60) * hourHeight - 3);
+                      const isCancelled = a.status === 'cancelada';
+                      const isCompleted = a.status === 'completada';
+                      const endStr = minutesToTime(startMin + dur);
+
+                      return `
+                        <button type="button" data-edit-appt="${a.id}"
+                          class="absolute left-1 right-1 rounded-xl p-2 text-left shadow-xs border-l-4 overflow-hidden transition hover:brightness-95 active:scale-[0.99] z-10 ${isCancelled ? 'opacity-50 line-through bg-pearl-100 text-graphite-500 border-graphite-400' : 'text-graphite-900'}"
+                          style="top:${topPx}px; height:${heightPx}px; ${!isCancelled ? `background-color:${w.color}18; border-left-color:${w.color};` : ''}">
+                          <div class="flex items-center justify-between gap-1">
+                            <span class="text-[11px] font-bold truncate">${escapeHtml(a.clientName)}</span>
+                            ${isCompleted ? '<span class="w-2 h-2 rounded-full bg-gold-500 shrink-0" title="Completada"></span>' : ''}
+                          </div>
+                          <p class="text-[10px] text-graphite-700 truncate font-medium">${escapeHtml(a.service)}</p>
+                          <p class="text-[10px] text-graphite-500 mt-0.5">${a.startTime} - ${endStr} · ${fmtUsd(a.price)}</p>
+                        </button>
+                      `;
+                    }).join('')}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
+
+      document.getElementById('btn-quick-add-day')?.addEventListener('click', () => openAppointmentModal(null, { date: dateStr }));
+      container.querySelectorAll('.slot-cell').forEach(cell => {
+        cell.addEventListener('click', () => openAppointmentModal(null, { date: dateStr, startTime: cell.dataset.slotTime, workerId: cell.dataset.slotWorker }));
+      });
+      container.querySelectorAll('[data-edit-appt]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const appt = state.appointments.find(x => x.id === btn.dataset.editAppt);
+          if (appt) openAppointmentModal(appt);
+        });
+      });
+    }
+
+    function renderWeekView(weekStart) {
+      const container = document.getElementById('calendar-container');
+      const appts = getFilteredAppointments();
+      const todayStr = toLocalDateStr(new Date());
+
+      const days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(weekStart);
+        d.setDate(weekStart.getDate() + i);
+        return d;
+      });
+
+      container.innerHTML = `
+        <div class="grid grid-cols-1 sm:grid-cols-7 divide-y sm:divide-y-0 sm:divide-x divide-pearl-200">
+          ${days.map(day => {
+            const dStr = toLocalDateStr(day);
+            const isToday = dStr === todayStr;
+            const dayAppts = appts.filter(a => a.date === dStr);
+            const dayName = day.toLocaleDateString('es-ES', { weekday: 'short' });
+
+            return `
+              <div class="flex flex-col min-h-[110px] sm:min-h-[360px] ${isToday ? 'bg-gold-50/40' : 'bg-white'}">
+                <div class="p-2.5 border-b border-pearl-200 flex items-center justify-between sm:flex-col sm:gap-1">
+                  <div class="flex items-center gap-2 sm:flex-col sm:gap-0.5">
+                    <span class="text-[11px] font-semibold uppercase text-graphite-400">${dayName}</span>
+                    <button type="button" data-goto-day="${dStr}" class="w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center transition ${isToday ? 'bg-gold-500 text-white' : 'text-graphite-900 hover:bg-pearl-100'}">${day.getDate()}</button>
+                  </div>
+                  <button type="button" data-add-day="${dStr}" class="text-xs text-gold-600 hover:text-gold-700 font-semibold px-2 py-0.5 rounded-lg hover:bg-gold-50">+</button>
+                </div>
+                <div class="p-2 space-y-1.5 flex-1">
+                  ${dayAppts.length === 0
+                    ? '<p class="text-[11px] text-graphite-400 text-center py-4 sm:py-8">Sin citas</p>'
+                    : dayAppts.map(a => {
+                        const w = getWorkerById(a.workerId);
+                        const isCancelled = a.status === 'cancelada';
+                        return `
+                          <button type="button" data-edit-appt="${a.id}" class="w-full text-left p-2 rounded-xl border-l-4 transition hover:brightness-95 ${isCancelled ? 'opacity-50 line-through bg-pearl-100 border-graphite-400' : ''}"
+                            style="${!isCancelled ? `background-color:${w.color}16; border-left-color:${w.color};` : ''}">
+                            <div class="flex items-center justify-between text-[10px] font-bold text-graphite-700">
+                              <span>${a.startTime}</span>
+                              <span>${fmtUsd(a.price)}</span>
+                            </div>
+                            <p class="text-xs font-semibold text-graphite-900 truncate mt-0.5">${escapeHtml(a.clientName)}</p>
+                            <p class="text-[10px] text-graphite-500 truncate">${escapeHtml(a.service)}</p>
+                          </button>
+                        `;
+                      }).join('')
+                  }
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+
+      container.querySelectorAll('[data-goto-day]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.selectedDate = parseLocalDate(btn.dataset.gotoDay);
+          state.calendarView = 'day';
+          renderCalendar();
+        });
+      });
+      container.querySelectorAll('[data-add-day]').forEach(btn => {
+        btn.addEventListener('click', () => openAppointmentModal(null, { date: btn.dataset.addDay }));
+      });
+      container.querySelectorAll('[data-edit-appt]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const appt = state.appointments.find(x => x.id === btn.dataset.editAppt);
+          if (appt) openAppointmentModal(appt);
+        });
+      });
+    }
+
+    function renderMonthView() {
+      const container = document.getElementById('calendar-container');
+      const year = state.selectedDate.getFullYear();
+      const month = state.selectedDate.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const startOffset = (firstDay.getDay() + 6) % 7;
+      const daysInMonth = lastDay.getDate();
+
+      const appts = getFilteredAppointments();
+      const todayStr = toLocalDateStr(new Date());
+      const selectedStr = toLocalDateStr(state.selectedDate);
+      const weekdays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+      let cellsHtml = '';
+      for (let i = 0; i < startOffset; i++) {
+        cellsHtml += `<div class="min-h-[64px] sm:min-h-[90px] bg-pearl-100/40 border-b border-r border-pearl-200"></div>`;
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayAppts = appts.filter(a => a.date === dStr && a.status !== 'cancelada');
+        const isToday = dStr === todayStr;
+        const isSelected = dStr === selectedStr;
+
+        cellsHtml += `
+          <button type="button" data-select-month-day="${dStr}"
+            class="min-h-[64px] sm:min-h-[90px] p-1.5 sm:p-2 border-b border-r border-pearl-200 text-left flex flex-col transition hover:bg-gold-50/40 ${isSelected ? 'bg-gold-50/80 ring-1 ring-inset ring-gold-300' : 'bg-white'}">
+            <span class="w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center ${isToday ? 'bg-gold-500 text-white' : 'text-graphite-900'}">${day}</span>
+            <div class="mt-1 flex flex-wrap gap-1">
+              ${dayAppts.slice(0, 4).map(a => {
+                const w = getWorkerById(a.workerId);
+                return `
+                  <span class="w-2 h-2 rounded-full sm:hidden" style="background-color:${w.color}"></span>
+                  <span class="hidden sm:inline-block w-full truncate text-[10px] font-medium px-1.5 py-0.5 rounded-md text-graphite-900" style="background-color:${w.color}20">${a.startTime} ${escapeHtml(a.clientName)}</span>
+                `;
+              }).join('')}
+              ${dayAppts.length > 4 ? `<span class="text-[10px] font-semibold text-graphite-500">+${dayAppts.length - 4}</span>` : ''}
+            </div>
+          </button>
+        `;
+      }
+
+      const selectedDayAppts = appts.filter(a => a.date === selectedStr);
+      container.innerHTML = `
+        <div class="grid grid-cols-7 bg-pearl-100 border-b border-pearl-300">
+          ${weekdays.map(wd => `<div class="py-2 text-center text-[11px] font-semibold text-graphite-500 uppercase">${wd}</div>`).join('')}
+        </div>
+        <div class="grid grid-cols-7">${cellsHtml}</div>
+        <div class="p-4 bg-pearl-100/50 border-t border-pearl-200">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-serif text-sm font-bold text-graphite-900 capitalize">
+              Citas del ${state.selectedDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </h3>
+            <button type="button" id="btn-month-add-selected" class="text-xs font-semibold text-gold-600">+ Agendar</button>
+          </div>
+          ${selectedDayAppts.length === 0
+            ? '<p class="text-xs text-graphite-400 text-center py-4">No hay citas registradas para este día.</p>'
+            : `<div class="space-y-2">
+                ${selectedDayAppts.map(a => {
+                  const w = getWorkerById(a.workerId);
+                  return `
+                    <button type="button" data-edit-appt="${a.id}" class="w-full flex items-center justify-between p-3 rounded-2xl bg-white border border-pearl-300 hover:border-gold-400 text-left transition ${a.status === 'cancelada' ? 'opacity-50 line-through' : ''}">
+                      <div class="flex items-center gap-3 min-w-0">
+                        <span class="w-1.5 h-10 rounded-full shrink-0" style="background-color:${w.color}"></span>
+                        <div class="min-w-0">
+                          <p class="text-sm font-semibold text-graphite-900 truncate">${escapeHtml(a.clientName)}</p>
+                          <p class="text-xs text-graphite-500 truncate">${escapeHtml(a.service)} · ${escapeHtml(w.name)}</p>
+                        </div>
+                      </div>
+                      <div class="text-right shrink-0 ml-2">
+                        <p class="text-xs font-bold text-graphite-900">${a.startTime} · ${fmtUsd(a.price)}</p>
+                        <p class="text-[11px] text-graphite-400">${formatDuration(a.duration)}</p>
+                      </div>
+                    </button>
+                  `;
+                }).join('')}
+              </div>`
+          }
+        </div>
+      `;
+
+      container.querySelectorAll('[data-select-month-day]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.selectedDate = parseLocalDate(btn.dataset.selectMonthDay);
+          renderMonthView();
+        });
+      });
+      document.getElementById('btn-month-add-selected')?.addEventListener('click', () => openAppointmentModal(null, { date: selectedStr }));
+      container.querySelectorAll('[data-edit-appt]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const appt = state.appointments.find(x => x.id === btn.dataset.editAppt);
+          if (appt) openAppointmentModal(appt);
+        });
+      });
+    }
+
+    // =========================================================================
+    // 8. MODAL DE CITA (CONECTADO A FICHAS TÉCNICAS SIN EXPONER COSTOS)
+    // =========================================================================
+    function openAppointmentModal(existingAppt = null, defaults = {}) {
+      const modal = document.getElementById('appt-modal');
+      const title = document.getElementById('appt-modal-title');
+      const askDelBtn = document.getElementById('btn-ask-delete');
+      document.getElementById('delete-confirm-box').classList.add('hidden');
+
+      const workerSel = document.getElementById('appt-worker-selector');
+      const initialWorkerId = existingAppt
+        ? existingAppt.workerId
+        : (defaults.workerId || (state.workerFilter !== 'all' ? state.workerFilter : state.activeProfile?.id || state.config.workers[0].id));
+
+      document.getElementById('appt-worker-id').value = initialWorkerId;
+
+      const renderWorkerPills = (selectedId) => {
+        workerSel.innerHTML = state.config.workers.map(w => {
+          const active = w.id === selectedId;
+          return `
+            <button type="button" data-pick-worker="${w.id}" class="p-2.5 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition ${
+              active ? 'text-white shadow-xs' : 'bg-pearl-100/70 text-graphite-700 border-pearl-300 hover:bg-pearl-200'
+            }" style="${active ? `background-color:${w.color}; border-color:${w.color}` : ''}">
+              <span class="w-2.5 h-2.5 rounded-full" style="background-color:${active ? '#ffffff' : w.color}"></span>
+              <span class="truncate w-full text-center">${escapeHtml(w.name)}</span>
+            </button>
+          `;
+        }).join('');
+
+        workerSel.querySelectorAll('[data-pick-worker]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.getElementById('appt-worker-id').value = btn.dataset.pickWorker;
+            renderWorkerPills(btn.dataset.pickWorker);
+            checkOverlapWarning();
+          });
+        });
+      };
+      renderWorkerPills(initialWorkerId);
+
+      const chipsContainer = document.getElementById('service-quick-chips');
+      const sheets = state.config.techSheets || [];
+      chipsContainer.innerHTML = sheets.map(s => `
+        <button type="button" data-pick-sheet="${s.id}" class="px-2.5 py-1.5 rounded-xl bg-pearl-100 hover:bg-gold-50 hover:border-gold-200 border border-transparent text-graphite-700 hover:text-gold-700 text-xs font-medium transition">
+          ${escapeHtml(s.name)} <span class="text-graphite-400">· ${fmtUsd(s.priceUsd)}</span>
+        </button>
+      `).join('');
+
+      chipsContainer.querySelectorAll('[data-pick-sheet]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const sheet = sheets.find(s => s.id === btn.dataset.pickSheet);
+          if (!sheet) return;
+          document.getElementById('appt-service-id').value = sheet.id;
+          document.getElementById('appt-service').value = sheet.name;
+          document.getElementById('appt-duration').value = sheet.duration || 60;
+          document.getElementById('appt-price').value = Number(sheet.priceUsd).toFixed(2);
+          document.getElementById('appt-linked-badge').classList.remove('hidden');
+          updateApptPreviews();
+          checkOverlapWarning();
+        });
+      });
+
+      if (existingAppt) {
+        title.textContent = 'Editar Cita';
+        document.getElementById('appt-id').value = existingAppt.id;
+        document.getElementById('appt-service-id').value = existingAppt.serviceId || '';
+        document.getElementById('appt-client').value = existingAppt.clientName || '';
+        document.getElementById('appt-date').value = existingAppt.date || toLocalDateStr(state.selectedDate);
+        document.getElementById('appt-start').value = existingAppt.startTime || '10:00';
+        document.getElementById('appt-duration').value = existingAppt.duration || 90;
+        document.getElementById('appt-service').value = existingAppt.service || '';
+        document.getElementById('appt-price').value = existingAppt.price ?? '';
+        document.getElementById('appt-status').value = existingAppt.status || 'pendiente';
+        document.getElementById('appt-notes').value = existingAppt.notes || '';
+        document.getElementById('appt-linked-badge').classList.toggle('hidden', !existingAppt.serviceId);
+        askDelBtn.classList.remove('hidden');
+      } else {
+        title.textContent = 'Nueva Cita';
+        document.getElementById('appt-id').value = '';
+        document.getElementById('appt-service-id').value = '';
+        document.getElementById('appt-client').value = '';
+        document.getElementById('appt-date').value = defaults.date || toLocalDateStr(state.selectedDate);
+        document.getElementById('appt-start').value = defaults.startTime || '10:00';
+        document.getElementById('appt-duration').value = 90;
+        document.getElementById('appt-service').value = '';
+        document.getElementById('appt-price').value = '';
+        document.getElementById('appt-status').value = 'pendiente';
+        document.getElementById('appt-notes').value = '';
+        document.getElementById('appt-linked-badge').classList.add('hidden');
+        askDelBtn.classList.add('hidden');
+      }
+
+      updateApptPreviews();
+      checkOverlapWarning();
+      modal.classList.remove('hidden');
+    }
+
+    function updateApptPreviews() {
+      const start = document.getElementById('appt-start').value;
+      const dur = parseInt(document.getElementById('appt-duration').value, 10) || 0;
+      const preview = document.getElementById('appt-end-preview');
+      if (start && dur > 0) {
+        const endStr = minutesToTime(timeToMinutes(start) + dur);
+        preview.textContent = `Fin: ${endStr} (${formatTime12h(endStr)})`;
+      } else {
+        preview.textContent = 'Fin: --:--';
+      }
+
+      const price = parseFloat(document.getElementById('appt-price').value) || 0;
+      document.getElementById('appt-cup-preview').textContent = fmtCupShort(price * getRate());
+
+      document.querySelectorAll('.dur-btn').forEach(btn => {
+        const active = Number(btn.dataset.min) === dur;
+        btn.className = `dur-btn px-2.5 py-1.5 rounded-xl text-xs font-medium transition ${
+          active ? 'bg-gold-500 text-white shadow-xs' : 'bg-pearl-100 text-graphite-700 hover:bg-gold-50'
+        }`;
+      });
+    }
+
+    function checkOverlapWarning() {
+      const box = document.getElementById('overlap-warning');
+      const detail = document.getElementById('overlap-warning-detail');
+      const currentId = document.getElementById('appt-id').value;
+      const workerId = document.getElementById('appt-worker-id').value;
+      const date = document.getElementById('appt-date').value;
+      const start = document.getElementById('appt-start').value;
+      const duration = parseInt(document.getElementById('appt-duration').value, 10) || 0;
+      const status = document.getElementById('appt-status').value;
+
+      if (!workerId || !date || !start || duration <= 0 || status === 'cancelada') {
+        box.classList.add('hidden');
+        return;
+      }
+
+      const s1 = timeToMinutes(start);
+      const e1 = s1 + duration;
+
+      const conflict = state.appointments.find(a => {
+        if (a.id === currentId || a.status === 'cancelada') return false;
+        if (a.workerId !== workerId || a.date !== date) return false;
+        const s2 = timeToMinutes(a.startTime);
+        const e2 = s2 + (Number(a.duration) || 60);
+        return s1 < e2 && s2 < e1;
+      });
+
+      if (conflict) {
+        const w = getWorkerById(workerId);
+        const cEnd = minutesToTime(timeToMinutes(conflict.startTime) + (Number(conflict.duration) || 60));
+        detail.textContent = `${w.name} ya tiene una cita con ${conflict.clientName} (${conflict.service}) de ${conflict.startTime} a ${cEnd}.`;
+        box.classList.remove('hidden');
+      } else {
+        box.classList.add('hidden');
+      }
+    }
+
+    async function saveAppointment(e) {
+      e.preventDefault();
+      const id = document.getElementById('appt-id').value;
+      const serviceName = document.getElementById('appt-service').value.trim();
+      let serviceId = document.getElementById('appt-service-id').value;
+
+      if (serviceId) {
+        const match = (state.config.techSheets || []).find(s => s.id === serviceId);
+        if (!match || match.name.trim().toLowerCase() !== serviceName.toLowerCase()) {
+          const byName = (state.config.techSheets || []).find(s => s.name.trim().toLowerCase() === serviceName.toLowerCase());
+          serviceId = byName ? byName.id : '';
+        }
+      } else {
+        const byName = (state.config.techSheets || []).find(s => s.name.trim().toLowerCase() === serviceName.toLowerCase());
+        if (byName) serviceId = byName.id;
+      }
+
+      const payload = {
+        clientName: document.getElementById('appt-client').value.trim(),
+        workerId: document.getElementById('appt-worker-id').value,
+        date: document.getElementById('appt-date').value,
+        startTime: document.getElementById('appt-start').value,
+        duration: parseInt(document.getElementById('appt-duration').value, 10) || 60,
+        serviceId,
+        service: serviceName,
+        price: parseFloat(document.getElementById('appt-price').value) || 0,
+        status: document.getElementById('appt-status').value,
+        notes: document.getElementById('appt-notes').value.trim(),
+        updatedAt: new Date().toISOString()
+      };
+
+      if (!payload.clientName || !payload.workerId || !payload.date || !payload.startTime || !payload.service) {
+        showToast('Completa los campos obligatorios', 'warning');
+        return;
+      }
+
+      try {
+        if (state.useFirebase && state.user && state.db) {
+          if (id) {
+            await updateDoc(doc(state.db, 'artifacts', state.appId, 'public', 'data', 'appointments', id), payload);
+            showToast('Cita actualizada');
+          } else {
+            await addDoc(collection(state.db, 'artifacts', state.appId, 'public', 'data', 'appointments'), payload);
+            showToast('Cita agendada');
+          }
+        } else {
+          if (id) {
+            const idx = state.appointments.findIndex(a => a.id === id);
+            if (idx !== -1) state.appointments[idx] = { id, ...payload };
+            showToast('Cita actualizada');
+          } else {
+            state.appointments.push({ id: 'loc_' + Date.now(), ...payload });
+            showToast('Cita agendada');
+          }
+          safeStorageSet(STORAGE_KEYS.backupAppts, state.appointments);
+          renderAllActiveViews();
+        }
+        document.getElementById('appt-modal').classList.add('hidden');
+      } catch (err) {
+        console.error('Error guardando cita:', err);
+        showToast('No se pudo guardar la cita', 'error');
+      }
+    }
+
+    async function deleteAppointment() {
+      const id = document.getElementById('appt-id').value;
+      if (!id) return;
+      try {
+        if (state.useFirebase && state.user && state.db) {
+          await deleteDoc(doc(state.db, 'artifacts', state.appId, 'public', 'data', 'appointments', id));
+        } else {
+          state.appointments = state.appointments.filter(a => a.id !== id);
+          safeStorageSet(STORAGE_KEYS.backupAppts, state.appointments);
+          renderAllActiveViews();
+        }
+        document.getElementById('appt-modal').classList.add('hidden');
+        showToast('Cita eliminada');
+      } catch (err) {
+        console.error('Error eliminando cita:', err);
+        showToast('No se pudo eliminar la cita', 'error');
+      }
+    }
+
+    // =========================================================================
+    // 9. MÓDULO DE FICHAS TÉCNICAS (SOLO ADMINISTRADORA)
+    // =========================================================================
+    function renderTechSheets() {
+      if (state.activeProfile?.role !== 'admin') return;
+
+      document.getElementById('quick-exchange-rate').value = getRate();
+
+      document.querySelectorAll('.sheetview-btn').forEach(btn => {
+        const active = btn.dataset.sheetview === state.sheetViewMode;
+        btn.className = `sheetview-btn px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+          active ? 'bg-white text-gold-600 shadow-xs border border-gold-200/60' : 'text-graphite-500 hover:text-graphite-900'
+        }`;
+      });
+
+      const sheets = state.config.techSheets || [];
+      const categories = ['Todas', ...Array.from(new Set(sheets.map(s => s.category || 'Otros')))];
+      const catBar = document.getElementById('sheets-category-bar');
+      catBar.innerHTML = categories.map(cat => {
+        const active = state.sheetCategoryFilter === cat;
+        return `
+          <button type="button" data-sheet-cat="${escapeHtml(cat)}" class="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+            active ? 'bg-graphite-900 text-white border-graphite-900' : 'bg-pearl-100 text-graphite-700 border-pearl-300 hover:bg-pearl-200'
+          }">${escapeHtml(cat)}</button>
+        `;
+      }).join('');
+
+      catBar.querySelectorAll('[data-sheet-cat]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.sheetCategoryFilter = btn.dataset.sheetCat;
+          renderTechSheets();
+        });
+      });
+
+      const filtered = state.sheetCategoryFilter === 'Todas'
+        ? sheets
+        : sheets.filter(s => (s.category || 'Otros') === state.sheetCategoryFilter);
+
+      const container = document.getElementById('sheets-container');
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-3xl p-8 text-center border border-pearl-300">
+            <p class="text-sm text-graphite-500">No hay fichas técnicas en esta categoría.</p>
+          </div>
+        `;
+        return;
+      }
+
+      if (state.sheetViewMode === 'table') {
+        renderTechSheetsTable(filtered, container);
+      } else {
+        renderTechSheetsCards(filtered, container);
+      }
+    }
+
+    function renderTechSheetsCards(sheets, container) {
+      container.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          ${sheets.map(s => {
+            const f = calcSheetFinancials(s);
+            const laborDesc = s.laborType === 'fixed_cup'
+              ? `Fijo ${Number(s.laborValue).toLocaleString('es-ES')} CUP`
+              : s.laborType === 'percent'
+                ? `${s.laborValue}% del precio`
+                : `Fijo ${fmtUsd(s.laborValue)}`;
+
+            return `
+              <div class="bg-white rounded-3xl p-5 shadow-card border border-pearl-300 flex flex-col justify-between gap-4 hover:border-gold-300 transition">
+                <div class="space-y-3">
+                  <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                      <span class="inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-gold-50 text-gold-700 border border-gold-200 mb-1">${escapeHtml(s.category || 'Otros')}</span>
+                      <h3 class="font-serif text-lg font-bold text-graphite-900 leading-snug">${escapeHtml(s.name)}</h3>
+                      <p class="text-xs text-graphite-400 mt-0.5">${formatDuration(s.duration)} · ${(s.supplies || []).length} insumos</p>
+                    </div>
+                    <div class="text-right shrink-0">
+                      <p class="text-lg font-bold text-graphite-900">${fmtUsd(f.priceUsd)}</p>
+                      <p class="text-[11px] font-medium text-graphite-400">${fmtCupShort(f.priceCup)}</p>
+                    </div>
+                  </div>
+
+                  <div class="space-y-1.5 pt-2 border-t border-pearl-200 text-xs">
+                    <div class="flex justify-between text-graphite-700">
+                      <span>Insumos:</span>
+                      <span class="font-semibold">${fmtUsd(f.suppliesUsd, 4)} <span class="text-graphite-400 font-normal">(${fmtCup(f.suppliesCup)})</span></span>
+                    </div>
+                    <div class="flex justify-between text-graphite-700">
+                      <span>Mano de obra <span class="text-[10px] text-graphite-400">(${laborDesc})</span>:</span>
+                      <span class="font-semibold">${fmtUsd(f.laborUsd, 4)}</span>
+                    </div>
+                    <div class="flex justify-between text-graphite-900 font-semibold pt-1 border-t border-pearl-200">
+                      <span>Costo Total:</span>
+                      <span>${fmtUsd(f.totalCostUsd, 4)}</span>
+                    </div>
+                  </div>
+
+                  <div class="p-3.5 rounded-2xl ${f.profitUsd >= 0 ? 'bg-gold-50 border border-gold-200' : 'bg-red-50 border border-red-200'} flex items-center justify-between">
+                    <div>
+                      <p class="text-[10px] font-bold uppercase tracking-wider ${f.profitUsd >= 0 ? 'text-gold-700' : 'text-red-700'}">Ganancia Real Neta</p>
+                      <p class="font-serif text-xl font-bold ${f.profitUsd >= 0 ? 'text-graphite-900' : 'text-red-800'}">${fmtUsd(f.profitUsd, 4)}</p>
+                      <p class="text-xs font-semibold ${f.profitUsd >= 0 ? 'text-gold-700' : 'text-red-700'}">${fmtCup(f.profitCup)}</p>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-xl text-xs font-bold ${f.profitUsd >= 0 ? 'bg-gold-500 text-white' : 'bg-red-600 text-white'}">
+                      ${f.marginPct.toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2 pt-2 border-t border-pearl-200">
+                  <button type="button" data-edit-sheet="${s.id}" class="flex-1 py-2 rounded-xl bg-pearl-100 hover:bg-gold-50 text-graphite-900 hover:text-gold-700 text-xs font-semibold transition">
+                    Editar Ficha
+                  </button>
+                  <button type="button" data-dup-sheet="${s.id}" class="px-3 py-2 rounded-xl bg-white hover:bg-pearl-100 text-graphite-700 text-xs font-semibold border border-pearl-300 transition" title="Duplicar ficha">
+                    Duplicar
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+
+      container.querySelectorAll('[data-edit-sheet]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const sheet = state.config.techSheets.find(x => x.id === btn.dataset.editSheet);
+          if (sheet) openSheetModal(sheet);
+        });
+      });
+
+      container.querySelectorAll('[data-dup-sheet]').forEach(btn => {
+        btn.addEventListener('click', () => duplicateSheet(btn.dataset.dupSheet));
+      });
+    }
+
+    function renderTechSheetsTable(sheets, container) {
+      container.innerHTML = `
+        <div class="bg-white rounded-3xl shadow-card border border-pearl-300 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-[700px]">
+              <thead>
+                <tr class="bg-pearl-100 text-[11px] uppercase tracking-wider text-graphite-500 border-b border-pearl-300">
+                  <th class="py-3 px-4 font-semibold">Servicio</th>
+                  <th class="py-3 px-3 font-semibold text-right">Precio</th>
+                  <th class="py-3 px-3 font-semibold text-right">Insumos</th>
+                  <th class="py-3 px-3 font-semibold text-right">Salario</th>
+                  <th class="py-3 px-3 font-semibold text-right">Costo Total</th>
+                  <th class="py-3 px-3 font-semibold text-right text-gold-700">Ganancia (USD)</th>
+                  <th class="py-3 px-3 font-semibold text-right text-gold-700">Ganancia (CUP)</th>
+                  <th class="py-3 px-3 font-semibold text-center">Margen</th>
+                  <th class="py-3 px-4 font-semibold text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-pearl-200 text-xs">
+                ${sheets.map(s => {
+                  const f = calcSheetFinancials(s);
+                  return `
+                    <tr class="hover:bg-pearl-100/50 transition">
+                      <td class="py-3 px-4">
+                        <p class="font-bold text-graphite-900">${escapeHtml(s.name)}</p>
+                        <p class="text-[10px] text-graphite-400">${escapeHtml(s.category || 'Otros')} · ${formatDuration(s.duration)}</p>
+                      </td>
+                      <td class="py-3 px-3 text-right font-bold text-graphite-900">${fmtUsd(f.priceUsd)}</td>
+                      <td class="py-3 px-3 text-right text-graphite-700">${fmtUsd(f.suppliesUsd, 4)}</td>
+                      <td class="py-3 px-3 text-right text-graphite-700">${fmtUsd(f.laborUsd, 4)}</td>
+                      <td class="py-3 px-3 text-right font-semibold text-graphite-900">${fmtUsd(f.totalCostUsd, 4)}</td>
+                      <td class="py-3 px-3 text-right font-bold ${f.profitUsd >= 0 ? 'text-gold-700' : 'text-red-600'}">${fmtUsd(f.profitUsd, 4)}</td>
+                      <td class="py-3 px-3 text-right font-bold ${f.profitUsd >= 0 ? 'text-gold-700' : 'text-red-600'}">${fmtCup(f.profitCup)}</td>
+                      <td class="py-3 px-3 text-center">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${f.profitUsd >= 0 ? 'bg-gold-50 text-gold-700 border border-gold-200' : 'bg-red-100 text-red-800'}">${f.marginPct.toFixed(1)}%</span>
+                      </td>
+                      <td class="py-3 px-4 text-right">
+                        <button type="button" data-edit-sheet="${s.id}" class="text-gold-600 hover:text-gold-700 font-semibold">Editar</button>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      container.querySelectorAll('[data-edit-sheet]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const sheet = state.config.techSheets.find(x => x.id === btn.dataset.editSheet);
+          if (sheet) openSheetModal(sheet);
+        });
+      });
+    }
+
+    async function duplicateSheet(sheetId) {
+      const orig = (state.config.techSheets || []).find(s => s.id === sheetId);
+      if (!orig) return;
+      const copy = JSON.parse(JSON.stringify(orig));
+      copy.id = 'sheet_' + Date.now();
+      copy.name = `${orig.name} (Copia)`;
+
+      await persistConfig({
+        ...state.config,
+        techSheets: [...state.config.techSheets, copy]
+      }, 'Ficha técnica duplicada');
+    }
+
+    function openSheetModal(existingSheet = null) {
+      const modal = document.getElementById('sheet-modal');
+      document.getElementById('sheet-delete-confirm').classList.add('hidden');
+
+      if (existingSheet) {
+        document.getElementById('sheet-modal-title').textContent = 'Editar Ficha Técnica';
+        document.getElementById('sheet-id').value = existingSheet.id;
+        document.getElementById('sheet-name').value = existingSheet.name || '';
+        document.getElementById('sheet-category').value = existingSheet.category || 'Otros';
+        document.getElementById('sheet-duration').value = existingSheet.duration || 60;
+        document.getElementById('sheet-price').value = existingSheet.priceUsd ?? '';
+        document.getElementById('sheet-labor-type').value = existingSheet.laborType || 'fixed_cup';
+        document.getElementById('sheet-labor-value').value = existingSheet.laborValue ?? 0;
+        state.draftSupplies = JSON.parse(JSON.stringify(existingSheet.supplies || []));
+        document.getElementById('btn-ask-del-sheet').classList.remove('hidden');
+      } else {
+        document.getElementById('sheet-modal-title').textContent = 'Nueva Ficha Técnica';
+        document.getElementById('sheet-id').value = '';
+        document.getElementById('sheet-name').value = '';
+        document.getElementById('sheet-category').value = 'Pestañas';
+        document.getElementById('sheet-duration').value = 90;
+        document.getElementById('sheet-price').value = '';
+        document.getElementById('sheet-labor-type').value = 'fixed_cup';
+        document.getElementById('sheet-labor-value').value = 1000;
+        state.draftSupplies = [{ name: '', boxCost: 0, uses: 1 }];
+        document.getElementById('btn-ask-del-sheet').classList.add('hidden');
+      }
+
+      renderDraftSupplies();
+      updateSheetModalCalculations();
+      modal.classList.remove('hidden');
+    }
+
+    function renderDraftSupplies() {
+      const list = document.getElementById('sheet-supplies-list');
+      if (state.draftSupplies.length === 0) {
+        list.innerHTML = '<p class="text-xs text-graphite-400 text-center py-4">Sin insumos. Pulsa "+ Agregar Insumo" para añadir materiales.</p>';
+        return;
+      }
+
+      list.innerHTML = state.draftSupplies.map((item, idx) => {
+        const perClient = (Number(item.uses) > 0) ? (Number(item.boxCost) || 0) / Number(item.uses) : 0;
+        return `
+          <div class="grid grid-cols-12 gap-2 items-center p-2.5 sm:px-3 sm:py-2 bg-white sm:bg-transparent rounded-xl sm:rounded-none border sm:border-0 border-pearl-300" data-supply-row="${idx}">
+            <div class="col-span-12 sm:col-span-5">
+              <label class="sm:hidden block text-[10px] font-semibold text-graphite-400 mb-0.5">Insumo</label>
+              <input type="text" data-sup-field="name" data-idx="${idx}" value="${escapeHtml(item.name)}" placeholder="Ej. Pegamento" class="w-full px-2.5 py-1.5 rounded-lg border border-pearl-300 bg-white text-xs focus:border-gold-500 focus:outline-none" />
+            </div>
+            <div class="col-span-4 sm:col-span-2">
+              <label class="sm:hidden block text-[10px] font-semibold text-graphite-400 mb-0.5">Caja ($)</label>
+              <input type="number" step="0.01" min="0" data-sup-field="boxCost" data-idx="${idx}" value="${item.boxCost}" class="w-full px-2 py-1.5 rounded-lg border border-pearl-300 bg-white text-xs text-right focus:border-gold-500 focus:outline-none" />
+            </div>
+            <div class="col-span-3 sm:col-span-2">
+              <label class="sm:hidden block text-[10px] font-semibold text-graphite-400 mb-0.5">Usos</label>
+              <input type="number" step="0.1" min="0.1" data-sup-field="uses" data-idx="${idx}" value="${item.uses}" class="w-full px-2 py-1.5 rounded-lg border border-pearl-300 bg-white text-xs text-right focus:border-gold-500 focus:outline-none" />
+            </div>
+            <div class="col-span-4 sm:col-span-2 text-right">
+              <label class="sm:hidden block text-[10px] font-semibold text-graphite-400 mb-0.5">Por Clienta</label>
+              <span class="text-xs font-bold text-graphite-900" data-sup-calc="${idx}">${fmtUsd(perClient, 4)}</span>
+            </div>
+            <div class="col-span-1 flex justify-end">
+              <button type="button" data-del-sup="${idx}" class="w-7 h-7 rounded-lg text-graphite-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition" title="Quitar insumo">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      list.querySelectorAll('[data-sup-field]').forEach(input => {
+        input.addEventListener('input', () => {
+          const idx = Number(input.dataset.idx);
+          const field = input.dataset.supField;
+          state.draftSupplies[idx][field] = field === 'name' ? input.value : (parseFloat(input.value) || 0);
+
+          const item = state.draftSupplies[idx];
+          const perClient = item.uses > 0 ? item.boxCost / item.uses : 0;
+          const calcEl = list.querySelector(`[data-sup-calc="${idx}"]`);
+          if (calcEl) calcEl.textContent = fmtUsd(perClient, 4);
+
+          updateSheetModalCalculations();
+        });
+      });
+
+      list.querySelectorAll('[data-del-sup]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.draftSupplies.splice(Number(btn.dataset.delSup), 1);
+          renderDraftSupplies();
+          updateSheetModalCalculations();
+        });
+      });
+    }
+
+    function updateSheetModalCalculations() {
+      const laborType = document.getElementById('sheet-labor-type').value;
+      const laborLabel = document.getElementById('sheet-labor-val-label');
+      laborLabel.textContent = laborType === 'fixed_cup' ? 'Valor (CUP)' : laborType === 'percent' ? 'Porcentaje (%)' : 'Valor (USD)';
+
+      const tempSheet = {
+        priceUsd: parseFloat(document.getElementById('sheet-price').value) || 0,
+        laborType,
+        laborValue: parseFloat(document.getElementById('sheet-labor-value').value) || 0,
+        supplies: state.draftSupplies
+      };
+
+      const f = calcSheetFinancials(tempSheet);
+      document.getElementById('sheet-price-cup').textContent = fmtCupShort(f.priceCup);
+      document.getElementById('sheet-labor-preview-usd').textContent = fmtUsd(f.laborUsd, 4);
+      document.getElementById('sheet-labor-preview-cup').textContent = fmtCup(f.laborCup);
+
+      document.getElementById('sum-supplies-usd').textContent = fmtUsd(f.suppliesUsd, 4);
+      document.getElementById('sum-supplies-cup').textContent = fmtCup(f.suppliesCup);
+      document.getElementById('sum-labor-usd').textContent = fmtUsd(f.laborUsd, 4);
+      document.getElementById('sum-labor-cup').textContent = fmtCup(f.laborCup);
+      document.getElementById('sum-total-cost-usd').textContent = fmtUsd(f.totalCostUsd, 4);
+      document.getElementById('sum-total-cost-cup').textContent = fmtCup(f.totalCostCup);
+      document.getElementById('sum-profit-usd').textContent = fmtUsd(f.profitUsd, 4);
+      document.getElementById('sum-profit-cup').textContent = fmtCup(f.profitCup);
+
+      const badge = document.getElementById('sum-margin-badge');
+      badge.textContent = `Margen: ${f.marginPct.toFixed(1)}%`;
+      badge.className = `text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+        f.profitUsd >= 0 ? 'bg-gold-500/20 text-gold-300 border-gold-400/30' : 'bg-red-500/20 text-red-300 border-red-400/30'
+      }`;
+    }
+
+    async function saveTechSheet(e) {
+      e.preventDefault();
+      const id = document.getElementById('sheet-id').value;
+      const name = document.getElementById('sheet-name').value.trim();
+      if (!name) {
+        showToast('Escribe el nombre del servicio', 'warning');
+        return;
+      }
+
+      const cleanedSupplies = state.draftSupplies
+        .filter(s => s.name && s.name.trim() !== '')
+        .map(s => ({
+          name: s.name.trim(),
+          boxCost: Number(s.boxCost) || 0,
+          uses: Number(s.uses) > 0 ? Number(s.uses) : 1
+        }));
+
+      const sheetObj = {
+        id: id || ('sheet_' + Date.now()),
+        name,
+        category: document.getElementById('sheet-category').value || 'Otros',
+        duration: parseInt(document.getElementById('sheet-duration').value, 10) || 60,
+        priceUsd: parseFloat(document.getElementById('sheet-price').value) || 0,
+        laborType: document.getElementById('sheet-labor-type').value,
+        laborValue: parseFloat(document.getElementById('sheet-labor-value').value) || 0,
+        supplies: cleanedSupplies
+      };
+
+      const sheets = [...(state.config.techSheets || [])];
+      if (id) {
+        const idx = sheets.findIndex(s => s.id === id);
+        if (idx !== -1) sheets[idx] = sheetObj;
+        else sheets.push(sheetObj);
+      } else {
+        sheets.push(sheetObj);
+      }
+
+      await persistConfig({ ...state.config, techSheets: sheets }, 'Ficha técnica guardada');
+      document.getElementById('sheet-modal').classList.add('hidden');
+    }
+
+    async function deleteTechSheet() {
+      const id = document.getElementById('sheet-id').value;
+      if (!id) return;
+      const sheets = (state.config.techSheets || []).filter(s => s.id !== id);
+      await persistConfig({ ...state.config, techSheets: sheets }, 'Ficha técnica eliminada');
+      document.getElementById('sheet-modal').classList.add('hidden');
+    }
+
+    // =========================================================================
+    // 10. REPORTES FINANCIEROS REALES (SOLO ADMINISTRADORA)
+    // =========================================================================
+    function getReportDateRange() {
+      const d = state.reportDate;
+      if (state.reportPeriod === 'daily') {
+        const str = toLocalDateStr(d);
+        return {
+          startStr: str,
+          endStr: str,
+          label: d.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' }),
+          titleType: 'Diario'
+        };
+      }
+      if (state.reportPeriod === 'weekly') {
+        const start = getStartOfWeek(d);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        return {
+          startStr: toLocalDateStr(start),
+          endStr: toLocalDateStr(end),
+          label: `${start.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} – ${end.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}`,
+          titleType: 'Semanal'
+        };
+      }
+      const start = new Date(d.getFullYear(), d.getMonth(), 1);
+      const end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+      return {
+        startStr: toLocalDateStr(start),
+        endStr: toLocalDateStr(end),
+        label: d.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }),
+        titleType: 'Mensual'
+      };
+    }
+
+    function computeReportMetrics() {
+      const rate = getRate();
+      const range = getReportDateRange();
+      const periodAppts = state.appointments.filter(a => a.date && a.date >= range.startStr && a.date <= range.endStr && a.status !== 'cancelada');
+
+      let totalRevenueUsd = 0;
+      let totalSuppliesUsd = 0;
+      let totalLaborUsd = 0;
+      let totalProfitUsd = 0;
+      const completedCount = periodAppts.filter(a => a.status === 'completada').length;
+
+      const byWorker = state.config.workers.map(w => {
+        const wAppts = periodAppts.filter(a => a.workerId === w.id);
+        let rev = 0, sup = 0, lab = 0, prof = 0;
+        wAppts.forEach(a => {
+          const fin = calcAppointmentFinancials(a);
+          rev += fin.priceUsd;
+          sup += fin.suppliesUsd;
+          lab += fin.laborUsd;
+          prof += fin.profitUsd;
+        });
+
+        totalRevenueUsd += rev;
+        totalSuppliesUsd += sup;
+        totalLaborUsd += lab;
+        totalProfitUsd += prof;
+
+        return {
+          worker: w,
+          daysWorked: new Set(wAppts.map(a => a.date)).size,
+          clients: wAppts.length,
+          revenueUsd: rev,
+          revenueCup: rev * rate,
+          suppliesUsd: sup,
+          suppliesCup: sup * rate,
+          laborUsd: lab,
+          laborCup: lab * rate,
+          profitUsd: prof,
+          profitCup: prof * rate,
+          marginPct: rev > 0 ? (prof / rev) * 100 : 0
+        };
+      });
+
+      return {
+        rate,
+        range,
+        totalClients: periodAppts.length,
+        completedCount,
+        totalRevenueUsd,
+        totalRevenueCup: totalRevenueUsd * rate,
+        totalSuppliesUsd,
+        totalSuppliesCup: totalSuppliesUsd * rate,
+        totalLaborUsd,
+        totalLaborCup: totalLaborUsd * rate,
+        totalProfitUsd,
+        totalProfitCup: totalProfitUsd * rate,
+        marginPct: totalRevenueUsd > 0 ? (totalProfitUsd / totalRevenueUsd) * 100 : 0,
+        byWorker
+      };
+    }
+
+    function renderReports() {
+      if (state.activeProfile?.role !== 'admin') return;
+
+      document.getElementById('rep-rate-badge').textContent = `${getRate()} CUP/USD`;
+      document.getElementById('rep-date-picker').value = toLocalDateStr(state.reportDate);
+
+      document.querySelectorAll('.period-btn').forEach(btn => {
+        const active = btn.dataset.period === state.reportPeriod;
+        btn.className = `period-btn flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-semibold transition ${
+          active ? 'bg-white text-gold-600 shadow-xs border border-gold-200/60' : 'text-graphite-500 hover:text-graphite-900'
+        }`;
+      });
+
+      const m = computeReportMetrics();
+      document.getElementById('rep-period-label').textContent = m.range.label;
+
+      document.getElementById('report-global-cards').innerHTML = `
+        <div class="bg-white rounded-3xl p-4 shadow-card border border-pearl-300">
+          <p class="text-[11px] font-semibold text-graphite-500 uppercase tracking-wider">Facturación Bruta</p>
+          <p class="font-serif text-2xl font-bold text-graphite-900 mt-1">${fmtUsd(m.totalRevenueUsd)}</p>
+          <p class="text-xs font-medium text-graphite-500 mt-0.5">${fmtCup(m.totalRevenueCup)}</p>
+        </div>
+
+        <div class="bg-white rounded-3xl p-4 shadow-card border border-pearl-300">
+          <p class="text-[11px] font-semibold text-graphite-500 uppercase tracking-wider">Costo Insumos</p>
+          <p class="font-serif text-2xl font-bold text-graphite-700 mt-1">${fmtUsd(m.totalSuppliesUsd)}</p>
+          <p class="text-xs font-medium text-graphite-500 mt-0.5">${fmtCup(m.totalSuppliesCup)}</p>
+        </div>
+
+        <div class="bg-white rounded-3xl p-4 shadow-card border border-pearl-300">
+          <p class="text-[11px] font-semibold text-graphite-500 uppercase tracking-wider">Mano de Obra</p>
+          <p class="font-serif text-2xl font-bold text-graphite-700 mt-1">${fmtUsd(m.totalLaborUsd)}</p>
+          <p class="text-xs font-medium text-graphite-500 mt-0.5">${fmtCup(m.totalLaborCup)}</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-gold-500 to-gold-600 text-white rounded-3xl p-4 shadow-gold">
+          <div class="flex items-center justify-between gap-1">
+            <p class="text-[11px] font-semibold text-gold-50 uppercase tracking-wider">Ganancia Real</p>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20">${m.marginPct.toFixed(1)}%</span>
+          </div>
+          <p class="font-serif text-2xl font-bold mt-1">${fmtUsd(m.totalProfitUsd)}</p>
+          <p class="text-xs font-medium text-gold-50 mt-0.5">${fmtCup(m.totalProfitCup)}</p>
+        </div>
+
+        <div class="bg-white rounded-3xl p-4 shadow-card border border-pearl-300">
+          <p class="text-[11px] font-semibold text-graphite-500 uppercase tracking-wider">Clientas Atendidas</p>
+          <p class="font-serif text-2xl font-bold text-graphite-900 mt-1">${m.totalClients}</p>
+          <p class="text-xs text-graphite-400 mt-0.5">${m.completedCount} completadas</p>
+        </div>
+      `;
+
+      // Gráfico comparativo en tonos Grafito y Dorado
+      const maxVal = Math.max(...m.byWorker.map(x => x.revenueUsd), 1);
+      document.getElementById('report-bar-chart').innerHTML = m.byWorker.map(item => {
+        const revPct = Math.round((item.revenueUsd / maxVal) * 100);
+        const profPct = Math.max(0, Math.round((item.profitUsd / maxVal) * 100));
+        return `
+          <div class="space-y-1.5">
+            <div class="flex flex-wrap items-center justify-between gap-1 text-xs">
+              <div class="flex items-center gap-2 font-bold text-graphite-900">
+                <span class="w-2.5 h-2.5 rounded-full" style="background-color:${item.worker.color}"></span>
+                ${escapeHtml(item.worker.name)}
+              </div>
+              <div class="text-graphite-700">
+                Fact: <span class="font-bold text-graphite-900">${fmtUsd(item.revenueUsd)}</span> ·
+                Ganancia: <span class="font-bold text-gold-700">${fmtUsd(item.profitUsd)}</span>
+              </div>
+            </div>
+            <div class="space-y-1">
+              <div class="w-full h-2.5 bg-pearl-100 rounded-full overflow-hidden">
+                <div class="h-full rounded-full bg-graphite-700 transition-all duration-500" style="width:${item.revenueUsd > 0 ? Math.max(revPct, 3) : 0}%"></div>
+              </div>
+              <div class="w-full h-2.5 bg-pearl-100 rounded-full overflow-hidden">
+                <div class="h-full rounded-full bg-gold-500 transition-all duration-500" style="width:${item.profitUsd > 0 ? Math.max(profPct, 3) : 0}%"></div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('report-worker-cards').innerHTML = m.byWorker.map(item => `
+        <div class="bg-white rounded-3xl p-5 shadow-card border border-pearl-300 space-y-3.5">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-bold text-sm shrink-0" style="background-color:${item.worker.color}">
+                ${escapeHtml((item.worker.name || 'T').charAt(0).toUpperCase())}
+              </div>
+              <div class="min-w-0">
+                <h4 class="font-bold text-graphite-900 text-sm truncate">${escapeHtml(item.worker.name)}</h4>
+                <p class="text-[11px] text-graphite-400">${item.daysWorked} días trab. · ${item.clients} clientas</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-2 text-xs pt-2 border-t border-pearl-200">
+            <div class="flex justify-between">
+              <span class="text-graphite-500">Facturación:</span>
+              <span class="font-bold text-graphite-900 text-right">${fmtUsd(item.revenueUsd)} <span class="block text-[10px] font-normal text-graphite-400">${fmtCup(item.revenueCup)}</span></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-graphite-500">Insumos consumidos:</span>
+              <span class="font-semibold text-graphite-700 text-right">${fmtUsd(item.suppliesUsd)} <span class="block text-[10px] font-normal text-graphite-400">${fmtCup(item.suppliesCup)}</span></span>
+            </div>
+            <div class="flex justify-between p-2 rounded-xl bg-pearl-100 border border-pearl-300/70">
+              <span class="font-semibold text-graphite-700">Salario a pagarle:</span>
+              <span class="font-bold text-graphite-900 text-right">${fmtUsd(item.laborUsd)} <span class="block text-[10px] font-semibold text-graphite-500">${fmtCup(item.laborCup)}</span></span>
+            </div>
+            <div class="flex justify-between p-2.5 rounded-xl bg-gold-50 border border-gold-200">
+              <span class="font-bold text-gold-700">Ganancia Real al Salón:</span>
+              <span class="font-bold text-graphite-900 text-right">${fmtUsd(item.profitUsd)} <span class="block text-[10px] font-semibold text-gold-700">${fmtCup(item.profitCup)}</span></span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('report-table-body').innerHTML = m.byWorker.map(item => `
+        <tr class="hover:bg-pearl-100/50 transition">
+          <td class="py-3 px-4 font-semibold text-graphite-900">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color:${item.worker.color}"></span>
+              ${escapeHtml(item.worker.name)}
+            </div>
+          </td>
+          <td class="py-3 px-3 text-center text-graphite-700">${item.daysWorked}d / ${item.clients}c</td>
+          <td class="py-3 px-3 text-right font-semibold text-graphite-900">
+            ${fmtUsd(item.revenueUsd)}<div class="text-[10px] font-normal text-graphite-400">${fmtCupShort(item.revenueCup)}</div>
+          </td>
+          <td class="py-3 px-3 text-right text-graphite-700">
+            ${fmtUsd(item.suppliesUsd)}<div class="text-[10px] text-graphite-400">${fmtCupShort(item.suppliesCup)}</div>
+          </td>
+          <td class="py-3 px-3 text-right font-semibold text-graphite-700">
+            ${fmtUsd(item.laborUsd)}<div class="text-[10px] font-normal text-graphite-400">${fmtCupShort(item.laborCup)}</div>
+          </td>
+          <td class="py-3 px-4 text-right font-bold text-gold-700">
+            ${fmtUsd(item.profitUsd)}<div class="text-[10px] font-medium">${fmtCup(item.profitCup)}</div>
+          </td>
+        </tr>
+      `).join('') + `
+        <tr class="bg-gold-50/60 font-bold text-graphite-900 border-t-2 border-gold-200">
+          <td class="py-3.5 px-4">TOTAL SALÓN</td>
+          <td class="py-3.5 px-3 text-center">${m.totalClients} clientas</td>
+          <td class="py-3.5 px-3 text-right">${fmtUsd(m.totalRevenueUsd)}<div class="text-[10px] font-normal text-graphite-500">${fmtCup(m.totalRevenueCup)}</div></td>
+          <td class="py-3.5 px-3 text-right text-graphite-700">${fmtUsd(m.totalSuppliesUsd)}<div class="text-[10px] font-normal text-graphite-500">${fmtCup(m.totalSuppliesCup)}</div></td>
+          <td class="py-3.5 px-3 text-right text-graphite-700">${fmtUsd(m.totalLaborUsd)}<div class="text-[10px] font-normal text-graphite-500">${fmtCup(m.totalLaborCup)}</div></td>
+          <td class="py-3.5 px-4 text-right text-gold-700">${fmtUsd(m.totalProfitUsd)}<div class="text-[10px] font-semibold">${fmtCup(m.totalProfitCup)}</div></td>
+        </tr>
+      `;
+    }
+
+    function openWhatsAppModal() {
+      const m = computeReportMetrics();
+      let text = `✨ *${state.config.salonName}*\n`;
+      text += `📊 *Resumen Financiero ${m.range.titleType}*\n`;
+      text += `📅 Período: ${m.range.label}\n`;
+      text += `💱 Tasa: 1 USD = ${m.rate} CUP\n`;
+      text += `━━━━━━━━━━━━━━━━━━\n`;
+      text += `💵 *Facturación Bruta:* ${fmtUsd(m.totalRevenueUsd)} (${fmtCup(m.totalRevenueCup)})\n`;
+      text += `🧴 *Insumos:* ${fmtUsd(m.totalSuppliesUsd)} (${fmtCup(m.totalSuppliesCup)})\n`;
+      text += `👩🏽‍🎨 *Salarios / Mano de Obra:* ${fmtUsd(m.totalLaborUsd)} (${fmtCup(m.totalLaborCup)})\n`;
+      text += `✨ *GANANCIA REAL NETA:* ${fmtUsd(m.totalProfitUsd)} (${fmtCup(m.totalProfitCup)}) [${m.marginPct.toFixed(1)}%]\n`;
+      text += `👩🏻‍🦰 *Clientas Atendidas:* ${m.totalClients} (${m.completedCount} completadas)\n\n`;
+      text += `📌 *Desglose por Trabajadora:*\n`;
+
+      m.byWorker.forEach(item => {
+        text += `\n• *${item.worker.name}* (${item.daysWorked} días · ${item.clients} clientas)\n`;
+        text += `  Facturado: ${fmtUsd(item.revenueUsd)} (${fmtCupShort(item.revenueCup)})\n`;
+        text += `  Insumos: ${fmtUsd(item.suppliesUsd)}\n`;
+        text += `  Salario a pagar: ${fmtUsd(item.laborUsd)} (${fmtCup(item.laborCup)})\n`;
+        text += `  Ganancia al salón: ${fmtUsd(item.profitUsd)} (${fmtCup(item.profitCup)})\n`;
+      });
+
+      document.getElementById('whatsapp-text').value = text;
+      document.getElementById('btn-share-whatsapp-link').href = `https://wa.me/?text=${encodeURIComponent(text)}`;
+      document.getElementById('whatsapp-modal').classList.remove('hidden');
+    }
+
+    // =========================================================================
+    // 11. AJUSTES, LOGO Y CONEXIÓN FIREBASE PROPIA (SOLO ADMINISTRADORA)
+    // =========================================================================
+    function renderSettings() {
+      if (state.activeProfile?.role !== 'admin') return;
+
+      updateAllLogoSlots();
+      updateSyncIndicators();
+
+      // Estado botones forma de logo
+      document.querySelectorAll('.logo-shape-btn').forEach(btn => {
+        const active = btn.dataset.logoShape === (state.config.logoShape || 'square');
+        btn.className = `logo-shape-btn px-3 py-1 rounded-lg text-xs font-semibold transition ${
+          active ? 'bg-gold-500 text-white shadow-xs' : 'text-graphite-500 hover:text-graphite-900'
+        }`;
+      });
+
+      document.getElementById('set-salon-name').value = state.config.salonName || 'Salón Lumen';
+      document.getElementById('set-exchange-rate').value = getRate();
+      document.getElementById('set-admin-pin').value = state.config.adminPin || '1234';
+
+      const savedFb = safeStorageGet(STORAGE_KEYS.customFb);
+      document.getElementById('custom-firebase-json').value = savedFb ? JSON.stringify(savedFb, null, 2) : '';
+
+      const wList = document.getElementById('set-workers-list');
+      wList.innerHTML = state.config.workers.map((w, idx) => `
+        <div class="p-3.5 rounded-2xl bg-pearl-100/70 border border-pearl-300 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div class="flex-1">
+            <label class="block text-[11px] font-semibold text-graphite-500 mb-1">
+              ${w.role === 'admin' ? 'Administradora (Dueña)' : `Trabajadora ${idx}`}
+            </label>
+            <input type="text" data-worker-name="${w.id}" value="${escapeHtml(w.name)}" class="w-full px-3 py-2 rounded-xl border border-pearl-300 bg-white text-sm font-medium focus:border-gold-500 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-graphite-500 mb-1.5">Color en agenda</label>
+            <div class="flex items-center gap-1.5" data-worker-colors="${w.id}">
+              ${PALETTE_COLORS.map(c => `
+                <button type="button" data-pick-color="${c.hex}" data-for-worker="${w.id}"
+                  class="w-7 h-7 rounded-full transition ${w.color === c.hex ? 'ring-2 ring-offset-2 ring-graphite-900 scale-110' : 'opacity-75 hover:opacity-100'}"
+                  style="background-color:${c.hex}" title="${c.name}"></button>
+              `).join('')}
+            </div>
+            <input type="hidden" data-worker-color-val="${w.id}" value="${w.color}" />
+          </div>
+        </div>
+      `).join('');
+
+      wList.querySelectorAll('[data-pick-color]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const wId = btn.dataset.forWorker;
+          const color = btn.dataset.pickColor;
+          document.querySelector(`[data-worker-color-val="${wId}"]`).value = color;
+          document.querySelectorAll(`[data-worker-colors="${wId}"] [data-pick-color]`).forEach(b => {
+            const active = b.dataset.pickColor === color;
+            b.className = `w-7 h-7 rounded-full transition ${active ? 'ring-2 ring-offset-2 ring-graphite-900 scale-110' : 'opacity-75 hover:opacity-100'}`;
+          });
+        });
+      });
+    }
+
+    async function saveSettings() {
+      const pin = document.getElementById('set-admin-pin').value.trim();
+      if (!/^\d{4}$/.test(pin)) {
+        showToast('El PIN debe tener exactamente 4 dígitos', 'warning');
+        return;
+      }
+
+      const rate = parseFloat(document.getElementById('set-exchange-rate').value);
+      if (!rate || rate <= 0) {
+        showToast('Ingresa una tasa de cambio válida', 'warning');
+        return;
+      }
+
+      const updatedWorkers = state.config.workers.map(w => ({
+        ...w,
+        name: document.querySelector(`[data-worker-name="${w.id}"]`)?.value.trim() || w.name,
+        color: document.querySelector(`[data-worker-color-val="${w.id}"]`)?.value || w.color
+      }));
+
+      await persistConfig({
+        ...state.config,
+        salonName: document.getElementById('set-salon-name').value.trim() || 'Salón Lumen',
+        exchangeRate: rate,
+        adminPin: pin,
+        workers: updatedWorkers
+      }, 'Configuración guardada y sincronizada');
+    }
+
+    // =========================================================================
+    // 12. EVENT LISTENERS GLOBALES
+    // =========================================================================
+    function bindEvents() {
+      // Perfil y PIN
+      document.getElementById('btn-switch-profile').addEventListener('click', () => openProfileModal(true));
+      document.getElementById('btn-close-profile-modal').addEventListener('click', () => document.getElementById('profile-modal').classList.add('hidden'));
+      document.getElementById('btn-back-profiles').addEventListener('click', () => {
+        document.getElementById('profile-pin-step').classList.add('hidden');
+        document.getElementById('profile-list-step').classList.remove('hidden');
+      });
+      document.querySelectorAll('.pin-key').forEach(btn => btn.addEventListener('click', () => handlePinDigit(btn.dataset.pin)));
+      document.getElementById('pin-clear').addEventListener('click', () => { state.pinBuffer = ''; updatePinDots(); });
+      document.getElementById('pin-backspace').addEventListener('click', () => { state.pinBuffer = state.pinBuffer.slice(0, -1); updatePinDots(); });
+
+      // Navegación
+      document.querySelectorAll('[data-nav]').forEach(btn => btn.addEventListener('click', () => switchNav(btn.dataset.nav)));
+
+      // Nueva cita
+      document.getElementById('btn-new-appt-desktop').addEventListener('click', () => openAppointmentModal());
+      document.getElementById('btn-new-appt-mobile').addEventListener('click', () => openAppointmentModal());
+
+      // Calendario
+      document.querySelectorAll('.calview-btn').forEach(btn => btn.addEventListener('click', () => { state.calendarView = btn.dataset.calview; renderCalendar(); }));
+      document.getElementById('cal-today').addEventListener('click', () => { state.selectedDate = new Date(); renderCalendar(); });
+      document.getElementById('cal-prev').addEventListener('click', () => {
+        const d = new Date(state.selectedDate);
+        if (state.calendarView === 'day') d.setDate(d.getDate() - 1);
+        else if (state.calendarView === 'week') d.setDate(d.getDate() - 7);
+        else d.setMonth(d.getMonth() - 1);
+        state.selectedDate = d;
+        renderCalendar();
+      });
+      document.getElementById('cal-next').addEventListener('click', () => {
+        const d = new Date(state.selectedDate);
+        if (state.calendarView === 'day') d.setDate(d.getDate() + 1);
+        else if (state.calendarView === 'week') d.setDate(d.getDate() + 7);
+        else d.setMonth(d.getMonth() + 1);
+        state.selectedDate = d;
+        renderCalendar();
+      });
+
+      // Modal cita
+      document.getElementById('btn-close-appt-modal').addEventListener('click', () => document.getElementById('appt-modal').classList.add('hidden'));
+      document.getElementById('btn-cancel-appt').addEventListener('click', () => document.getElementById('appt-modal').classList.add('hidden'));
+      document.getElementById('appt-form').addEventListener('submit', saveAppointment);
+      document.querySelectorAll('.dur-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.getElementById('appt-duration').value = btn.dataset.min;
+          updateApptPreviews();
+          checkOverlapWarning();
+        });
+      });
+      ['appt-date', 'appt-start', 'appt-duration', 'appt-status', 'appt-price'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+          updateApptPreviews();
+          checkOverlapWarning();
+        });
+      });
+      document.getElementById('appt-service').addEventListener('input', () => {
+        const val = document.getElementById('appt-service').value.trim().toLowerCase();
+        const match = (state.config.techSheets || []).find(s => s.name.trim().toLowerCase() === val);
+        document.getElementById('appt-service-id').value = match ? match.id : '';
+        document.getElementById('appt-linked-badge').classList.toggle('hidden', !match);
+      });
+      document.getElementById('btn-ask-delete').addEventListener('click', () => document.getElementById('delete-confirm-box').classList.remove('hidden'));
+      document.getElementById('btn-cancel-delete').addEventListener('click', () => document.getElementById('delete-confirm-box').classList.add('hidden'));
+      document.getElementById('btn-confirm-delete').addEventListener('click', deleteAppointment);
+
+      // Fichas Técnicas
+      document.getElementById('btn-new-sheet').addEventListener('click', () => openSheetModal(null));
+      document.querySelectorAll('.sheetview-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.sheetViewMode = btn.dataset.sheetview;
+          renderTechSheets();
+        });
+      });
+      document.getElementById('btn-apply-quick-rate').addEventListener('click', async () => {
+        const val = parseFloat(document.getElementById('quick-exchange-rate').value);
+        if (!val || val <= 0) {
+          showToast('Tasa de cambio inválida', 'warning');
+          return;
+        }
+        await persistConfig({ ...state.config, exchangeRate: val }, `Tasa actualizada: 1 USD = ${val} CUP`);
+      });
+
+      // Modal Ficha Técnica
+      document.getElementById('btn-close-sheet-modal').addEventListener('click', () => document.getElementById('sheet-modal').classList.add('hidden'));
+      document.getElementById('btn-cancel-sheet').addEventListener('click', () => document.getElementById('sheet-modal').classList.add('hidden'));
+      document.getElementById('btn-add-supply-row').addEventListener('click', () => {
+        state.draftSupplies.push({ name: '', boxCost: 0, uses: 1 });
+        renderDraftSupplies();
+        updateSheetModalCalculations();
+      });
+      ['sheet-price', 'sheet-labor-type', 'sheet-labor-value'].forEach(id => {
+        document.getElementById(id).addEventListener('input', updateSheetModalCalculations);
+        document.getElementById(id).addEventListener('change', updateSheetModalCalculations);
+      });
+      document.getElementById('sheet-form').addEventListener('submit', saveTechSheet);
+      document.getElementById('btn-ask-del-sheet').addEventListener('click', () => document.getElementById('sheet-delete-confirm').classList.remove('hidden'));
+      document.getElementById('btn-cancel-del-sheet').addEventListener('click', () => document.getElementById('sheet-delete-confirm').classList.add('hidden'));
+      document.getElementById('btn-confirm-del-sheet').addEventListener('click', deleteTechSheet);
+
+      // Reportes
+      document.querySelectorAll('.period-btn').forEach(btn => btn.addEventListener('click', () => { state.reportPeriod = btn.dataset.period; renderReports(); }));
+      document.getElementById('rep-prev').addEventListener('click', () => {
+        const d = new Date(state.reportDate);
+        if (state.reportPeriod === 'daily') d.setDate(d.getDate() - 1);
+        else if (state.reportPeriod === 'weekly') d.setDate(d.getDate() - 7);
+        else d.setMonth(d.getMonth() - 1);
+        state.reportDate = d;
+        renderReports();
+      });
+      document.getElementById('rep-next').addEventListener('click', () => {
+        const d = new Date(state.reportDate);
+        if (state.reportPeriod === 'daily') d.setDate(d.getDate() + 1);
+        else if (state.reportPeriod === 'weekly') d.setDate(d.getDate() + 7);
+        else d.setMonth(d.getMonth() + 1);
+        state.reportDate = d;
+        renderReports();
+      });
+      document.getElementById('rep-date-picker').addEventListener('change', (e) => {
+        if (e.target.value) {
+          state.reportDate = parseLocalDate(e.target.value);
+          renderReports();
+        }
+      });
+
+      // WhatsApp
+      document.getElementById('btn-open-whatsapp').addEventListener('click', openWhatsAppModal);
+      document.getElementById('btn-close-whatsapp').addEventListener('click', () => document.getElementById('whatsapp-modal').classList.add('hidden'));
+      document.getElementById('btn-copy-whatsapp').addEventListener('click', () => {
+        const textarea = document.getElementById('whatsapp-text');
+        textarea.select();
+        textarea.setSelectionRange(0, 99999);
+        try {
+          document.execCommand('copy');
+          showToast('Resumen copiado al portapapeles');
+        } catch {
+          showToast('Selecciona y copia el texto manualmente', 'warning');
+        }
+      });
+
+      // Logo en Ajustes
+      document.getElementById('input-logo-upload').addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+          const dataUrl = await compressLogoFile(file);
+          await persistConfig({ ...state.config, logoDataUrl: dataUrl }, 'Logo del salón actualizado y sincronizado');
+        } catch (err) {
+          showToast(err.message || 'No se pudo procesar la imagen', 'error');
+        } finally {
+          e.target.value = '';
+        }
+      });
+
+      document.getElementById('btn-reset-logo').addEventListener('click', async () => {
+        await persistConfig({ ...state.config, logoDataUrl: '' }, 'Logo predeterminado restaurado');
+      });
+
+      document.querySelectorAll('.logo-shape-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const shape = btn.dataset.logoShape;
+          await persistConfig({ ...state.config, logoShape: shape }, 'Forma del logo actualizada');
+        });
+      });
+
+      // Guardar ajustes generales
+      document.getElementById('btn-save-settings').addEventListener('click', saveSettings);
+
+      // Conexión Firebase propia (alojamiento externo)
+      document.getElementById('btn-save-custom-fb').addEventListener('click', async () => {
+        const raw = document.getElementById('custom-firebase-json').value.trim();
+        if (!raw) {
+          showToast('Pega primero tu objeto JSON de firebaseConfig', 'warning');
+          return;
+        }
+        try {
+          const parsed = JSON.parse(raw);
+          if (!parsed.apiKey || !parsed.projectId) {
+            showToast('El JSON debe incluir al menos apiKey y projectId', 'warning');
+            return;
+          }
+          safeStorageSet(STORAGE_KEYS.customFb, parsed);
+          showToast('Conectando con tu proyecto Firebase...');
+          await initFirebase();
+        } catch {
+          showToast('JSON inválido. Verifica comillas dobles y llaves.', 'error');
+        }
+      });
+
+      document.getElementById('btn-clear-custom-fb').addEventListener('click', async () => {
+        safeStorageSet(STORAGE_KEYS.customFb, null);
+        document.getElementById('custom-firebase-json').value = '';
+        showToast('Conexión propia eliminada. Reconectando...');
+        await initFirebase();
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      updateAllLogoSlots();
+      bindEvents();
+      initFirebase();
+    });
+  </script>
+</body>
+</html>
