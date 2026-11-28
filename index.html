@@ -382,10 +382,16 @@
             <h2 class="font-serif text-xl sm:text-2xl font-bold text-graphite-900">Reportes Financieros Reales</h2>
             <p class="text-xs sm:text-sm text-graphite-500">Facturación, insumos, salarios y ganancia neta real (Tasa: <span id="rep-rate-badge" class="font-semibold text-graphite-700">990 CUP</span>)</p>
           </div>
+          <div class="flex flex-wrap items-center gap-2">
           <button type="button" id="btn-open-whatsapp" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-graphite-900 hover:bg-graphite-800 text-white text-xs sm:text-sm font-semibold shadow-xs transition active:scale-95">
             <svg class="w-4 h-4 text-gold-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/></svg>
             Copiar / WhatsApp
           </button>
+            <button type="button" id="btn-open-clean" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-white hover:bg-red-50 border border-red-200 text-red-600 text-xs sm:text-sm font-semibold transition active:scale-95">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+              Limpiar registros
+            </button>
+          </div>
         </div>
 
         <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-2 border-t border-pearl-200">
@@ -641,6 +647,55 @@
   </nav>
 
   <!-- ===================================================================== -->
+  <!-- MODAL LIMPIAR REGISTROS (SOLO ADMINISTRADORA, CON CLAVE)              -->
+  <!-- ===================================================================== -->
+  <div id="clean-modal" class="fixed inset-0 z-50 bg-graphite-900/40 backdrop-blur-xs hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl border border-pearl-300 max-h-[92vh] flex flex-col overflow-hidden animate-pop-in">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-pearl-200 shrink-0">
+        <h3 class="font-serif text-xl font-bold text-graphite-900">Limpiar registros</h3>
+        <button type="button" id="btn-close-clean" class="w-8 h-8 rounded-full bg-pearl-100 hover:bg-pearl-200 flex items-center justify-center text-graphite-700 transition" aria-label="Cerrar">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4 overflow-y-auto flex-1">
+        <div class="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-xs text-red-800 leading-relaxed">
+          Esta acción es <strong>definitiva</strong>. Los reportes se calculan con las citas, así que al borrarlas los reportes quedan en cero. No se borran las fichas técnicas, las trabajadoras ni los ajustes.
+        </div>
+
+        <div class="space-y-2">
+          <label class="flex items-start gap-2.5 p-3 rounded-2xl border border-pearl-300 cursor-pointer">
+            <input type="radio" name="clean-mode" value="all" checked class="mt-0.5" />
+            <span class="text-xs text-graphite-700"><strong class="text-graphite-900">Todo el historial</strong><br>Borra todas las citas: reportes y agenda quedan vacíos.</span>
+          </label>
+          <label class="flex items-start gap-2.5 p-3 rounded-2xl border border-pearl-300 cursor-pointer">
+            <input type="radio" name="clean-mode" value="until" class="mt-0.5" />
+            <span class="text-xs text-graphite-700"><strong class="text-graphite-900">Solo hasta una fecha</strong><br>Conserva las citas posteriores (por ejemplo, las ya reservadas de verdad).</span>
+          </label>
+          <div id="clean-until-wrap" class="hidden pl-1">
+            <label class="block text-[11px] font-semibold text-graphite-700 mb-1">Borrar citas hasta el (incluido)</label>
+            <input type="date" id="clean-until" class="px-3 py-2 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm" />
+          </div>
+        </div>
+
+        <p id="clean-count" class="text-sm font-semibold text-graphite-900"></p>
+
+        <button type="button" id="clean-backup" class="text-xs font-semibold text-gold-700 hover:text-gold-600 underline underline-offset-2">Descargar copia de respaldo (CSV) antes de borrar</button>
+
+        <div>
+          <label class="block text-xs font-semibold text-graphite-700 mb-1.5">Clave de acceso de la administradora</label>
+          <input type="password" id="clean-pin" inputmode="numeric" autocomplete="off" placeholder="Escribe tu clave" class="w-full px-3.5 py-2.5 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm" />
+        </div>
+      </div>
+
+      <div class="px-5 py-4 border-t border-pearl-200 flex items-center gap-2 shrink-0">
+        <button type="button" id="clean-cancel" class="flex-1 px-4 py-2.5 rounded-xl bg-pearl-100 hover:bg-pearl-200 text-graphite-700 text-sm font-semibold transition active:scale-95">Cancelar</button>
+        <button type="button" id="clean-confirm" class="flex-1 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition active:scale-95 disabled:opacity-40">Eliminar definitivamente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
   <!-- MODAL FLYER DE LA SEMANA                                              -->
   <!-- ===================================================================== -->
   <div id="flyer-modal" class="fixed inset-0 z-50 bg-graphite-900/40 backdrop-blur-xs hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -672,6 +727,20 @@
           <label class="flex items-center gap-2 text-xs text-graphite-700"><input type="checkbox" id="flyer-show-service" checked class="rounded border-pearl-300" /> Mostrar el servicio de cada turno</label>
           <label class="flex items-center gap-2 text-xs text-graphite-700"><input type="checkbox" id="flyer-full-name" class="rounded border-pearl-300" /> Mostrar el apellido completo</label>
           <p class="text-[11px] text-graphite-400">Por privacidad, por defecto solo aparece la inicial del apellido. Los turnos cancelados no se incluyen.</p>
+        </div>
+
+        <div class="space-y-2 pt-1 border-t border-pearl-200">
+          <p class="text-xs font-semibold text-graphite-700 pt-3">Fondo del flyer</p>
+          <div class="flex flex-wrap items-center gap-2">
+            <label for="flyer-bg-file" class="cursor-pointer px-3 py-2 rounded-xl bg-pearl-100 hover:bg-pearl-200 text-graphite-700 text-xs font-semibold transition">Subir imagen de fondo</label>
+            <input type="file" id="flyer-bg-file" accept="image/*" class="hidden" />
+            <button type="button" id="flyer-bg-remove" class="hidden px-3 py-2 rounded-xl text-red-600 hover:bg-red-50 text-xs font-semibold transition">Quitar fondo</button>
+          </div>
+          <div id="flyer-bg-veil-wrap" class="hidden">
+            <label class="block text-[11px] text-graphite-500 mb-1">Claridad del fondo (más claro = el texto se lee mejor)</label>
+            <input type="range" id="flyer-bg-veil" min="30" max="95" value="80" class="w-full" />
+          </div>
+          <p class="text-[11px] text-graphite-400">Solo cambia el fondo; el resto del diseño se mantiene. Se guarda en este dispositivo. Las fotos verticales funcionan mejor.</p>
         </div>
 
         <div class="rounded-2xl border border-pearl-300 bg-pearl-100 p-2">
@@ -1002,7 +1071,7 @@
   <script type="module">
     import { initializeApp, deleteApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, collection, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     // =========================================================================
     // 1. CONSTANTES, ISOTIPO SVG Y FICHAS TÉCNICAS REALES DE "SALÓN LUMEN"
@@ -1044,7 +1113,8 @@
     const STORAGE_KEYS = {
       customFb: 'salon_lumen_custom_firebase_cfg',
       backupConfig: 'salon_lumen_backup_config',
-      backupAppts: 'salon_lumen_backup_appts'
+      backupAppts: 'salon_lumen_backup_appts',
+      flyerBg: 'salon_lumen_flyer_bg'
     };
 
     function safeStorageGet(key) {
@@ -1189,6 +1259,9 @@
       flyerWeekStart: null,
       flyerBlob: null,
       flyerToken: 0,
+      flyerBgImg: null,
+      flyerBgVeil: 80,
+      flyerBgLoaded: false,
       calcCategory: 'Todas',
       draftSupplies: [],
       reportPeriod: 'weekly',
@@ -2431,6 +2504,15 @@
       bg.addColorStop(1, GOLD_SOFT);
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, W, H);
+      if (state.flyerBgImg) {
+        // Imagen de fondo personalizada, recortada para cubrir todo el flyer, con un velo claro para que el texto se lea
+        const bgImg = state.flyerBgImg;
+        const sc = Math.max(W / bgImg.width, H / bgImg.height);
+        const dw = bgImg.width * sc, dh = bgImg.height * sc;
+        ctx.drawImage(bgImg, (W - dw) / 2, (H - dh) / 2, dw, dh);
+        ctx.fillStyle = `rgba(255,255,255,${(state.flyerBgVeil || 80) / 100})`;
+        ctx.fillRect(0, 0, W, H);
+      }
       ctx.strokeStyle = GOLD;
       ctx.lineWidth = 4;
       ctx.strokeRect(28, 28, W - 56, H - 56);
@@ -2611,7 +2693,7 @@
         sel.value = state.workerFilter !== 'all' && state.config.workers.some(w => w.id === state.workerFilter) ? state.workerFilter : 'all';
       }
       document.getElementById('flyer-modal').classList.remove('hidden');
-      refreshFlyer();
+      flyerLoadSavedBg().then(refreshFlyer);
     }
 
     function flyerFileName() {
@@ -2646,6 +2728,173 @@
       } else {
         downloadFlyer();
         showToast('Este navegador no permite compartir directo: se descargó la imagen', 'warning');
+      }
+    }
+
+    // =========================================================================
+    // 7.7 FONDO PERSONALIZADO DEL FLYER (se guarda solo en este dispositivo)
+    // =========================================================================
+    function flyerSyncBgControls() {
+      const has = !!state.flyerBgImg;
+      document.getElementById('flyer-bg-remove').classList.toggle('hidden', !has);
+      document.getElementById('flyer-bg-veil-wrap').classList.toggle('hidden', !has);
+      document.getElementById('flyer-bg-veil').value = state.flyerBgVeil;
+    }
+
+    async function flyerLoadSavedBg() {
+      if (!state.flyerBgLoaded) {
+        state.flyerBgLoaded = true;
+        const saved = safeStorageGet(STORAGE_KEYS.flyerBg);
+        if (saved && saved.dataUrl) {
+          state.flyerBgImg = await flyerLoadImage(saved.dataUrl);
+          state.flyerBgVeil = Number(saved.veil) || 80;
+        }
+      }
+      flyerSyncBgControls();
+    }
+
+    function flyerSaveBg(dataUrl) {
+      safeStorageSet(STORAGE_KEYS.flyerBg, dataUrl ? { dataUrl, veil: state.flyerBgVeil } : null);
+    }
+
+    async function flyerHandleBgFile(file) {
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { showToast('Elige un archivo de imagen', 'warning'); return; }
+      if (file.size > 20 * 1024 * 1024) { showToast('La imagen es muy pesada (máximo 20 MB)', 'warning'); return; }
+      try {
+        const rawUrl = await new Promise((res, rej) => {
+          const r = new FileReader();
+          r.onload = () => res(r.result);
+          r.onerror = () => rej(new Error('lectura'));
+          r.readAsDataURL(file);
+        });
+        const raw = await flyerLoadImage(rawUrl);
+        if (!raw) throw new Error('imagen');
+        // Se reduce a un máximo de 1600 px para que sea ligera
+        const scale = Math.min(1, 1600 / Math.max(raw.width, raw.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(raw.width * scale);
+        c.height = Math.round(raw.height * scale);
+        c.getContext('2d').drawImage(raw, 0, 0, c.width, c.height);
+        const dataUrl = c.toDataURL('image/jpeg', 0.85);
+        state.flyerBgImg = await flyerLoadImage(dataUrl);
+        flyerSaveBg(dataUrl);
+        flyerSyncBgControls();
+        refreshFlyer();
+      } catch (err) {
+        console.error('Error cargando fondo:', err);
+        showToast('No se pudo usar esa imagen. Prueba con otra', 'error');
+      }
+    }
+
+    function flyerRemoveBg() {
+      state.flyerBgImg = null;
+      flyerSaveBg(null);
+      flyerSyncBgControls();
+      refreshFlyer();
+    }
+
+    // =========================================================================
+    // 7.8 LIMPIAR REGISTROS DE REPORTES (SOLO ADMINISTRADORA, CON CLAVE)
+    // Los reportes se calculan a partir de las citas: limpiar = borrar citas.
+    // =========================================================================
+    function cleanGetTargets() {
+      const mode = document.querySelector('input[name="clean-mode"]:checked').value;
+      if (mode === 'all') return state.appointments.slice();
+      const until = document.getElementById('clean-until').value;
+      if (!until) return [];
+      return state.appointments.filter(a => a.date && a.date <= until);
+    }
+
+    function refreshCleanModal() {
+      const mode = document.querySelector('input[name="clean-mode"]:checked').value;
+      document.getElementById('clean-until-wrap').classList.toggle('hidden', mode !== 'until');
+      const n = cleanGetTargets().length;
+      document.getElementById('clean-count').textContent = n === 0
+        ? 'No hay citas que borrar con esta selección.'
+        : `Se eliminarán ${n} ${n === 1 ? 'cita' : 'citas'}.`;
+      document.getElementById('clean-confirm').disabled = n === 0;
+    }
+
+    function openCleanModal() {
+      if (state.activeProfile?.role !== 'admin') return;
+      document.querySelector('input[name="clean-mode"][value="all"]').checked = true;
+      document.getElementById('clean-until').value = toLocalDateStr(new Date());
+      document.getElementById('clean-pin').value = '';
+      document.getElementById('clean-modal').classList.remove('hidden');
+      refreshCleanModal();
+    }
+
+    function downloadCleanBackup() {
+      const targets = cleanGetTargets();
+      if (targets.length === 0) { showToast('No hay citas para respaldar', 'warning'); return; }
+      const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const header = ['Fecha', 'Hora', 'Trabajadora', 'Clienta', 'Servicio', 'Precio USD', 'Estado', 'Notas'];
+      const rows = targets
+        .slice()
+        .sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.startTime || '').localeCompare(b.startTime || ''))
+        .map(a => [a.date, a.startTime, getWorkerById(a.workerId).name, a.clientName, a.service, Number(a.price) || 0, a.status, a.notes || ''].map(esc).join(','));
+      const csv = '\uFEFF' + [header.map(esc).join(','), ...rows].join('\r\n');
+      const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `respaldo-citas-${toLocalDateStr(new Date())}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }
+
+    async function confirmCleanRecords() {
+      if (state.activeProfile?.role !== 'admin') return;
+      const pinInput = document.getElementById('clean-pin');
+      if (pinInput.value.trim() !== String(state.config.adminPin)) {
+        showToast('Clave incorrecta', 'error');
+        pinInput.value = '';
+        pinInput.focus();
+        return;
+      }
+
+      const targets = cleanGetTargets();
+      if (targets.length === 0) return;
+
+      const btn = document.getElementById('clean-confirm');
+      btn.disabled = true;
+      btn.textContent = 'Eliminando…';
+
+      try {
+        if (state.useFirebase && state.user && state.db) {
+          const ids = targets.map(a => a.id);
+          const jobs = [];
+          for (let i = 0; i < ids.length; i += 400) {
+            const batch = writeBatch(state.db);
+            ids.slice(i, i + 400).forEach(id => batch.delete(doc(state.db, 'artifacts', state.appId, 'public', 'data', 'appointments', id)));
+            jobs.push(batch.commit());
+          }
+          await Promise.race([
+            Promise.all(jobs),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 20000))
+          ]);
+        } else {
+          const del = new Set(targets.map(a => a.id));
+          state.appointments = state.appointments.filter(a => !del.has(a.id));
+          safeStorageSet(STORAGE_KEYS.backupAppts, state.appointments);
+          renderAllActiveViews();
+        }
+        document.getElementById('clean-modal').classList.add('hidden');
+        showToast(`Registros eliminados (${targets.length})`);
+      } catch (err) {
+        if (err && err.message === 'timeout') {
+          document.getElementById('clean-modal').classList.add('hidden');
+          showToast('Está tardando: revisa tu conexión. Verifica en unos minutos que se hayan borrado', 'warning');
+        } else {
+          console.error('Error limpiando registros:', err);
+          showToast('No se pudieron eliminar los registros', 'error');
+        }
+      } finally {
+        btn.textContent = 'Eliminar definitivamente';
+        btn.disabled = false;
+        pinInput.value = '';
       }
     }
 
@@ -3781,6 +4030,27 @@
 
       // Navegación
       document.querySelectorAll('[data-nav]').forEach(btn => btn.addEventListener('click', () => switchNav(btn.dataset.nav)));
+
+      // Fondo del flyer
+      document.getElementById('flyer-bg-file').addEventListener('change', (e) => { flyerHandleBgFile(e.target.files[0]); e.target.value = ''; });
+      document.getElementById('flyer-bg-remove').addEventListener('click', flyerRemoveBg);
+      document.getElementById('flyer-bg-veil').addEventListener('change', (e) => {
+        state.flyerBgVeil = Number(e.target.value) || 80;
+        if (state.flyerBgImg) {
+          const saved = safeStorageGet(STORAGE_KEYS.flyerBg);
+          if (saved && saved.dataUrl) safeStorageSet(STORAGE_KEYS.flyerBg, { ...saved, veil: state.flyerBgVeil });
+        }
+        refreshFlyer();
+      });
+
+      // Limpiar registros (reportes)
+      document.getElementById('btn-open-clean').addEventListener('click', openCleanModal);
+      document.getElementById('btn-close-clean').addEventListener('click', () => document.getElementById('clean-modal').classList.add('hidden'));
+      document.getElementById('clean-cancel').addEventListener('click', () => document.getElementById('clean-modal').classList.add('hidden'));
+      document.querySelectorAll('input[name="clean-mode"]').forEach(r => r.addEventListener('change', refreshCleanModal));
+      document.getElementById('clean-until').addEventListener('change', refreshCleanModal);
+      document.getElementById('clean-backup').addEventListener('click', downloadCleanBackup);
+      document.getElementById('clean-confirm').addEventListener('click', confirmCleanRecords);
 
       // Flyer de la semana
       document.getElementById('btn-open-flyer').addEventListener('click', openFlyerModal);
