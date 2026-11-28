@@ -237,6 +237,24 @@
     <!-- VISTA 1: AGENDA / CALENDARIO COMPARTIDO                             -->
     <!-- =================================================================== -->
     <section id="view-calendar" class="space-y-4 animate-fade-in">
+      <details id="reminders-panel" open class="bg-white rounded-3xl shadow-card border border-pearl-300 overflow-hidden">
+        <summary class="cursor-pointer list-none [&::-webkit-details-marker]:hidden flex items-center justify-between gap-3 p-4">
+          <div class="flex items-center gap-2 min-w-0">
+            <svg class="w-5 h-5 text-green-600 shrink-0" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM2.25 12.76c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z"/></svg>
+            <h3 class="font-serif text-base font-bold text-graphite-900 truncate">Recordatorios por WhatsApp</h3>
+            <span id="reminders-count" class="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold">0</span>
+          </div>
+          <span class="text-[11px] text-graphite-400 shrink-0">Abrir / cerrar</span>
+        </summary>
+        <div class="px-4 pb-4 space-y-3">
+          <div class="inline-flex bg-pearl-100 p-1 rounded-2xl border border-pearl-300/60">
+            <button type="button" data-remind-day="today" class="remind-day-btn px-4 py-1.5 rounded-xl text-xs font-semibold transition">Hoy</button>
+            <button type="button" data-remind-day="tomorrow" class="remind-day-btn px-4 py-1.5 rounded-xl text-xs font-semibold transition">Mañana</button>
+          </div>
+          <div id="reminders-list" class="space-y-2"></div>
+        </div>
+      </details>
+
       <div class="bg-white rounded-3xl p-4 shadow-card border border-pearl-300 space-y-3.5">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-1.5 sm:gap-2">
@@ -257,6 +275,11 @@
             <button type="button" data-calview="week" class="calview-btn flex-1 sm:flex-none px-4 py-1.5 rounded-xl text-xs font-semibold transition">Semana</button>
             <button type="button" data-calview="month" class="calview-btn flex-1 sm:flex-none px-4 py-1.5 rounded-xl text-xs font-semibold transition">Mes</button>
           </div>
+
+          <button type="button" id="btn-open-flyer" class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-gold-50 hover:bg-gold-100 border border-gold-200 text-gold-700 text-xs font-semibold transition active:scale-95 w-full sm:w-auto">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
+            Flyer de la semana
+          </button>
         </div>
 
         <div id="worker-filter-bar" class="flex items-center gap-2 overflow-x-auto no-scrollbar pt-1"></div>
@@ -618,6 +641,53 @@
   </nav>
 
   <!-- ===================================================================== -->
+  <!-- MODAL FLYER DE LA SEMANA                                              -->
+  <!-- ===================================================================== -->
+  <div id="flyer-modal" class="fixed inset-0 z-50 bg-graphite-900/40 backdrop-blur-xs hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl border border-pearl-300 max-h-[92vh] flex flex-col overflow-hidden animate-pop-in">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-pearl-200 shrink-0">
+        <h3 class="font-serif text-xl font-bold text-graphite-900">Flyer de la semana</h3>
+        <button type="button" id="btn-close-flyer" class="w-8 h-8 rounded-full bg-pearl-100 hover:bg-pearl-200 flex items-center justify-center text-graphite-700 transition" aria-label="Cerrar">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4 overflow-y-auto flex-1">
+        <div class="flex items-center justify-between gap-2">
+          <button type="button" id="flyer-prev" class="w-9 h-9 rounded-xl bg-pearl-100 hover:bg-pearl-200 flex items-center justify-center text-graphite-700 transition active:scale-95" aria-label="Semana anterior">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+          </button>
+          <p id="flyer-week-label" class="text-sm font-semibold text-graphite-900 text-center"></p>
+          <button type="button" id="flyer-next" class="w-9 h-9 rounded-xl bg-pearl-100 hover:bg-pearl-200 flex items-center justify-center text-graphite-700 transition active:scale-95" aria-label="Semana siguiente">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+          </button>
+        </div>
+
+        <div id="flyer-worker-wrap" class="hidden">
+          <label class="block text-xs font-semibold text-graphite-700 mb-1.5">Turnos de</label>
+          <select id="flyer-worker" class="w-full px-3.5 py-2.5 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm"></select>
+        </div>
+
+        <div class="space-y-2">
+          <label class="flex items-center gap-2 text-xs text-graphite-700"><input type="checkbox" id="flyer-show-service" checked class="rounded border-pearl-300" /> Mostrar el servicio de cada turno</label>
+          <label class="flex items-center gap-2 text-xs text-graphite-700"><input type="checkbox" id="flyer-full-name" class="rounded border-pearl-300" /> Mostrar el apellido completo</label>
+          <p class="text-[11px] text-graphite-400">Por privacidad, por defecto solo aparece la inicial del apellido. Los turnos cancelados no se incluyen.</p>
+        </div>
+
+        <div class="rounded-2xl border border-pearl-300 bg-pearl-100 p-2">
+          <p id="flyer-status" class="text-xs text-graphite-500 text-center py-6">Preparando flyer…</p>
+          <img id="flyer-preview" alt="Vista previa del flyer" class="hidden w-full rounded-xl" />
+        </div>
+      </div>
+
+      <div class="px-5 py-4 border-t border-pearl-200 flex items-center gap-2 shrink-0">
+        <button type="button" id="flyer-download" class="flex-1 px-4 py-2.5 rounded-xl bg-pearl-100 hover:bg-pearl-200 text-graphite-700 text-sm font-semibold transition active:scale-95 disabled:opacity-40" disabled>Descargar imagen</button>
+        <button type="button" id="flyer-share" class="flex-1 px-4 py-2.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-white text-sm font-semibold transition active:scale-95 disabled:opacity-40" disabled>Compartir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
   <!-- MODAL CREAR / EDITAR CITA                                             -->
   <!-- ===================================================================== -->
   <div id="appt-modal" class="fixed inset-0 z-50 bg-graphite-900/40 backdrop-blur-xs hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -645,6 +715,11 @@
         <div>
           <label class="block text-xs font-semibold text-graphite-700 mb-1.5">Nombre de la clienta *</label>
           <input type="text" id="appt-client" required placeholder="Ej. Laura Martínez" class="w-full px-3.5 py-2.5 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-graphite-700 mb-1.5">WhatsApp de la clienta <span class="font-normal text-graphite-400">(opcional, para el recordatorio)</span></label>
+          <input type="tel" id="appt-phone" inputmode="tel" placeholder="Ej. 5 1234567 o +53 51234567" class="w-full px-3.5 py-2.5 rounded-xl border border-pearl-300 bg-pearl-100/50 focus:bg-white focus:border-gold-500 focus:outline-none text-sm" />
         </div>
 
         <div>
@@ -1110,6 +1185,10 @@
       sheetCategoryFilter: 'Todas',
       sheetViewMode: 'cards',
       calcQty: {},
+      reminderDay: 'today',
+      flyerWeekStart: null,
+      flyerBlob: null,
+      flyerToken: 0,
       calcCategory: 'Todas',
       draftSupplies: [],
       reportPeriod: 'weekly',
@@ -1856,6 +1935,7 @@
 
     function renderCalendar() {
       renderWorkerFilterBar();
+      renderReminders();
 
       document.querySelectorAll('.calview-btn').forEach(btn => {
         const active = btn.dataset.calview === state.calendarView;
@@ -2143,6 +2223,433 @@
     }
 
     // =========================================================================
+    // 7.5 RECORDATORIOS POR WHATSAPP (cada trabajadora ve sus propias citas)
+    // La administradora ve las de todas. El mensaje se abre ya escrito en WhatsApp.
+    // =========================================================================
+    function normalizeWhatsappNumber(raw) {
+      let d = String(raw || '').replace(/\D/g, '');
+      if (d.startsWith('00')) d = d.slice(2);
+      if (d.length === 8) d = '53' + d; // celular cubano escrito sin código de país
+      return d.length >= 10 ? d : '';
+    }
+
+    function buildReminderMessage(a, isTomorrow) {
+      const price = Number(a.price) || 0;
+      const w = getWorkerById(a.workerId);
+      return `Hola ${a.clientName}, te recordamos tu cita ${isTomorrow ? 'mañana' : 'hoy'} a las ${formatTime12h(a.startTime)} con ${w.name} para ${a.service}.\n` +
+             `Total a pagar: ${fmtUsd(price)} USD (${fmtCupShort(price * getRate())}).\n` +
+             `¡Te esperamos en ${state.config.salonName}!`;
+    }
+
+    function markReminderSent(id) {
+      const a = state.appointments.find(x => x.id === id);
+      if (!a) return;
+      const marker = `${a.date} ${a.startTime}`;
+      if (a.reminderFor === marker) return;
+      if (state.useFirebase && state.user && state.db) {
+        setDoc(doc(state.db, 'artifacts', state.appId, 'public', 'data', 'appointments', id), { reminderFor: marker }, { merge: true })
+          .catch(err => console.error('Error marcando recordatorio:', err));
+      } else {
+        a.reminderFor = marker;
+        safeStorageSet(STORAGE_KEYS.backupAppts, state.appointments);
+        renderReminders();
+      }
+    }
+
+    function renderReminders() {
+      const listEl = document.getElementById('reminders-list');
+      if (!listEl || !state.activeProfile) return;
+
+      document.querySelectorAll('.remind-day-btn').forEach(btn => {
+        const active = btn.dataset.remindDay === state.reminderDay;
+        btn.className = `remind-day-btn px-4 py-1.5 rounded-xl text-xs font-semibold transition ${
+          active ? 'bg-white text-gold-600 shadow-xs border border-gold-200/60' : 'text-graphite-500 hover:text-graphite-900'
+        }`;
+      });
+
+      const isTomorrow = state.reminderDay === 'tomorrow';
+      const target = new Date();
+      if (isTomorrow) target.setDate(target.getDate() + 1);
+      const dateStr = toLocalDateStr(target);
+      const isAdmin = state.activeProfile.role === 'admin';
+
+      const list = state.appointments
+        .filter(a => a.date === dateStr && a.status !== 'cancelada' && (isAdmin || a.workerId === state.activeProfile.id))
+        .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+
+      document.getElementById('reminders-count').textContent = list.length;
+
+      if (list.length === 0) {
+        listEl.innerHTML = `<p class="text-xs text-graphite-500 py-2">${isAdmin ? 'No hay citas' : 'No tienes citas'} ${isTomorrow ? 'para mañana' : 'para hoy'}.</p>`;
+        return;
+      }
+
+      listEl.innerHTML = list.map(a => {
+        const w = getWorkerById(a.workerId);
+        const num = normalizeWhatsappNumber(a.phone);
+        const sent = a.reminderFor === `${a.date} ${a.startTime}`;
+        const price = Number(a.price) || 0;
+        const action = num
+          ? `<a href="https://wa.me/${num}?text=${encodeURIComponent(buildReminderMessage(a, isTomorrow))}" target="_blank" rel="noopener" data-remind-send="${a.id}" class="shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-xl ${sent ? 'bg-pearl-100 text-graphite-700 hover:bg-pearl-200' : 'bg-green-600 hover:bg-green-700 text-white'} text-xs font-semibold transition active:scale-95">${sent ? 'Reenviar' : 'Enviar WhatsApp'}</a>`
+          : `<button type="button" data-remind-edit="${a.id}" class="shrink-0 px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-semibold transition active:scale-95">Agregar teléfono</button>`;
+        return `
+          <div class="flex items-center justify-between gap-3 p-3 rounded-2xl border ${sent ? 'border-green-200 bg-green-50/50' : 'border-pearl-300 bg-white'}">
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-graphite-900 truncate">${formatTime12h(a.startTime)} · ${escapeHtml(a.clientName)} ${sent ? '<span class="text-green-600 text-xs font-bold">✓ Enviado</span>' : ''}</p>
+              <p class="text-xs text-graphite-500 truncate">${escapeHtml(a.service)} · ${fmtUsd(price)} (${fmtCupShort(price * getRate())})${isAdmin ? ' · ' + escapeHtml(w.name) : ''}</p>
+            </div>
+            ${action}
+          </div>`;
+      }).join('');
+
+      listEl.querySelectorAll('[data-remind-send]').forEach(link => {
+        // Se marca como enviado un instante después para no interrumpir la apertura de WhatsApp
+        link.addEventListener('click', () => setTimeout(() => markReminderSent(link.dataset.remindSend), 600));
+      });
+      listEl.querySelectorAll('[data-remind-edit]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const appt = state.appointments.find(x => x.id === btn.dataset.remindEdit);
+          if (appt) openAppointmentModal(appt);
+        });
+      });
+    }
+
+    // =========================================================================
+    // 7.6 FLYER DE LA SEMANA (imagen PNG para compartir en el grupo de clientas)
+    // Cada trabajadora exporta solo sus turnos; la administradora elige.
+    // =========================================================================
+    function flyerGetWorkerId() {
+      if (state.activeProfile?.role === 'admin') return document.getElementById('flyer-worker').value || 'all';
+      return state.activeProfile?.id;
+    }
+
+    function flyerGetAppointments() {
+      const start = state.flyerWeekStart;
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      const from = toLocalDateStr(start);
+      const to = toLocalDateStr(end);
+      const wid = flyerGetWorkerId();
+      return state.appointments
+        .filter(a => a.date >= from && a.date <= to && a.status !== 'cancelada' && (wid === 'all' || a.workerId === wid))
+        .sort((a, b) => a.date !== b.date ? a.date.localeCompare(b.date) : (a.startTime || '').localeCompare(b.startTime || ''));
+    }
+
+    function flyerClientName(name, full) {
+      const clean = String(name || '').trim();
+      if (full) return clean;
+      const parts = clean.split(/\s+/);
+      if (parts.length < 2) return clean;
+      return `${parts[0]} ${parts[1].charAt(0).toUpperCase()}.`;
+    }
+
+    function flyerLoadImage(src) {
+      return new Promise(resolve => {
+        if (!src) return resolve(null);
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
+    }
+
+    function flyerRoundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function flyerFitText(ctx, text, maxW) {
+      if (ctx.measureText(text).width <= maxW) return text;
+      let t = text;
+      while (t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+      return t.trimEnd() + '…';
+    }
+
+    function flyerDateFromStr(str) {
+      const [y, m, d] = str.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    async function buildFlyerCanvas(appts) {
+      const SERIF = '"Playfair Display", Georgia, serif';
+      const SANS = '"Plus Jakarta Sans", Inter, Arial, sans-serif';
+      const GOLD = '#C5A059', GOLD_DARK = '#8C6C30', GOLD_SOFT = '#FBF8F1', LINE = '#E6D5B8', INK = '#1F2024', MUTED = '#6B6E76';
+      const W = 1080, PAD = 78;
+
+      try {
+        await Promise.all([
+          document.fonts.load(`700 40px ${SERIF}`), document.fonts.load(`italic 500 40px ${SERIF}`),
+          document.fonts.load(`600 28px ${SANS}`), document.fonts.load(`500 24px ${SANS}`)
+        ]);
+      } catch (e) { /* si falla se usan las tipografías de respaldo */ }
+
+      const showService = document.getElementById('flyer-show-service').checked;
+      const fullName = document.getElementById('flyer-full-name').checked;
+      const wid = flyerGetWorkerId();
+      const workerLabel = wid !== 'all' ? getWorkerById(wid).name : '';
+      const showWorkerInRow = wid === 'all' && state.config.workers.length > 1;
+      const logo = await flyerLoadImage(state.config.logoDataUrl);
+
+      const start = state.flyerWeekStart;
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      const rangeText = `${start.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })} al ${end.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}`;
+
+      // Agrupar por día
+      const groups = [];
+      appts.forEach(a => {
+        let g = groups[groups.length - 1];
+        if (!g || g.date !== a.date) { g = { date: a.date, items: [] }; groups.push(g); }
+        g.items.push(a);
+      });
+
+      const ROW_H = showService ? 96 : 70;
+      const DAY_H = 64, DAY_GAP = 34;
+
+      // Altura total (se calcula antes para que todo quepa)
+      let headerH = 80;
+      if (logo) headerH += 150;
+      headerH += 78 + 52 + 64 + (workerLabel ? 50 : 0) + 56;
+      const bodyH = groups.reduce((sum, g) => sum + DAY_H + 14 + g.items.length * ROW_H + DAY_GAP, 0);
+      const footerH = 190;
+      const H = Math.max(1350, headerH + bodyH + footerH);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = W;
+      canvas.height = H;
+      const ctx = canvas.getContext('2d');
+
+      // Fondo y marco
+      const bg = ctx.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0, GOLD_SOFT);
+      bg.addColorStop(0.35, '#FFFFFF');
+      bg.addColorStop(1, GOLD_SOFT);
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = GOLD;
+      ctx.lineWidth = 4;
+      ctx.strokeRect(28, 28, W - 56, H - 56);
+      ctx.strokeStyle = LINE;
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(44, 44, W - 88, H - 88);
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      let y = 80;
+
+      // Logo
+      if (logo) {
+        const size = 120, lx = (W - size) / 2;
+        ctx.save();
+        if (state.config.logoShape === 'circle') {
+          ctx.beginPath(); ctx.arc(W / 2, y + size / 2, size / 2, 0, Math.PI * 2); ctx.closePath();
+        } else {
+          flyerRoundRect(ctx, lx, y, size, size, 24);
+        }
+        ctx.clip();
+        ctx.drawImage(logo, lx, y, size, size);
+        ctx.restore();
+        y += 150;
+      }
+
+      // Título
+      ctx.fillStyle = INK;
+      ctx.font = `700 68px ${SERIF}`;
+      ctx.fillText(flyerFitText(ctx, state.config.salonName, W - PAD * 2), W / 2, y + 58);
+      y += 78;
+
+      ctx.fillStyle = GOLD_DARK;
+      ctx.font = `600 26px ${SANS}`;
+      if ('letterSpacing' in ctx) ctx.letterSpacing = '8px';
+      ctx.fillText('AGENDA DE LA SEMANA', W / 2, y + 28);
+      if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+      y += 52;
+
+      ctx.fillStyle = INK;
+      ctx.font = `italic 500 42px ${SERIF}`;
+      ctx.fillText(rangeText, W / 2, y + 40);
+      y += 64;
+
+      if (workerLabel) {
+        ctx.fillStyle = MUTED;
+        ctx.font = `500 30px ${SANS}`;
+        ctx.fillText(`Turnos de ${workerLabel}`, W / 2, y + 26);
+        y += 50;
+      }
+
+      // Divisor decorativo
+      ctx.strokeStyle = GOLD;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(W / 2 - 160, y + 14); ctx.lineTo(W / 2 - 18, y + 14); ctx.moveTo(W / 2 + 18, y + 14); ctx.lineTo(W / 2 + 160, y + 14); ctx.stroke();
+      ctx.fillStyle = GOLD;
+      ctx.beginPath(); ctx.moveTo(W / 2, y + 6); ctx.lineTo(W / 2 + 8, y + 14); ctx.lineTo(W / 2, y + 22); ctx.lineTo(W / 2 - 8, y + 14); ctx.closePath(); ctx.fill();
+      y += 56;
+
+      // Días y turnos
+      groups.forEach(g => {
+        const d = flyerDateFromStr(g.date);
+        let dayLabel = d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).replace(',', '');
+        dayLabel = dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1);
+
+        ctx.fillStyle = GOLD;
+        flyerRoundRect(ctx, PAD, y, W - PAD * 2, DAY_H, DAY_H / 2);
+        ctx.fill();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'left';
+        ctx.font = `700 30px ${SANS}`;
+        ctx.fillText(dayLabel, PAD + 32, y + 41);
+        ctx.textAlign = 'right';
+        ctx.font = `500 24px ${SANS}`;
+        ctx.fillText(`${g.items.length} ${g.items.length === 1 ? 'turno' : 'turnos'}`, W - PAD - 32, y + 40);
+        y += DAY_H + 14;
+
+        g.items.forEach((a, i) => {
+          const midY = y + ROW_H / 2;
+          ctx.textAlign = 'left';
+          ctx.fillStyle = GOLD_DARK;
+          ctx.font = `700 32px ${SERIF}`;
+          ctx.fillText(formatTime12h(a.startTime), PAD + 24, midY + 11);
+
+          const textX = PAD + 250;
+          const maxW = W - PAD - 24 - textX;
+          ctx.fillStyle = INK;
+          ctx.font = `600 33px ${SANS}`;
+          if (showService) {
+            ctx.fillText(flyerFitText(ctx, flyerClientName(a.clientName, fullName), maxW), textX, midY - 6);
+            ctx.fillStyle = MUTED;
+            ctx.font = `500 23px ${SANS}`;
+            const sub = showWorkerInRow ? `${a.service} · ${getWorkerById(a.workerId).name}` : a.service;
+            ctx.fillText(flyerFitText(ctx, sub, maxW), textX, midY + 28);
+          } else {
+            const nameText = showWorkerInRow ? `${flyerClientName(a.clientName, fullName)} · ${getWorkerById(a.workerId).name}` : flyerClientName(a.clientName, fullName);
+            ctx.fillText(flyerFitText(ctx, nameText, maxW), textX, midY + 11);
+          }
+
+          if (i < g.items.length - 1) {
+            ctx.strokeStyle = LINE;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(PAD + 24, y + ROW_H); ctx.lineTo(W - PAD - 24, y + ROW_H); ctx.stroke();
+          }
+          y += ROW_H;
+        });
+        y += DAY_GAP;
+      });
+
+      // Pie
+      ctx.textAlign = 'center';
+      ctx.fillStyle = MUTED;
+      ctx.font = `500 25px ${SANS}`;
+      ctx.fillText('Llega puntual a tu turno. Si necesitas cambiarlo, avísanos con tiempo.', W / 2, H - 112);
+      ctx.fillStyle = GOLD_DARK;
+      ctx.font = `italic 600 34px ${SERIF}`;
+      ctx.fillText(state.config.salonName, W / 2, H - 70);
+
+      return canvas;
+    }
+
+    async function refreshFlyer() {
+      const token = ++state.flyerToken;
+      const start = state.flyerWeekStart;
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      document.getElementById('flyer-week-label').textContent =
+        `${start.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} – ${end.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+
+      const status = document.getElementById('flyer-status');
+      const img = document.getElementById('flyer-preview');
+      const btnShare = document.getElementById('flyer-share');
+      const btnDown = document.getElementById('flyer-download');
+      btnShare.disabled = true;
+      btnDown.disabled = true;
+
+      const appts = flyerGetAppointments();
+      if (appts.length === 0) {
+        state.flyerBlob = null;
+        img.classList.add('hidden');
+        status.classList.remove('hidden');
+        status.textContent = 'No hay turnos en esta semana.';
+        return;
+      }
+
+      status.classList.remove('hidden');
+      status.textContent = 'Preparando flyer…';
+      try {
+        const canvas = await buildFlyerCanvas(appts);
+        const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+        if (token !== state.flyerToken) return; // llegó una solicitud más nueva
+        if (!blob) throw new Error('No se pudo crear la imagen');
+        const oldUrl = img.dataset.url;
+        state.flyerBlob = blob;
+        img.dataset.url = URL.createObjectURL(blob);
+        img.src = img.dataset.url;
+        if (oldUrl) URL.revokeObjectURL(oldUrl);
+        img.classList.remove('hidden');
+        status.classList.add('hidden');
+        btnShare.disabled = false;
+        btnDown.disabled = false;
+      } catch (err) {
+        console.error('Error creando flyer:', err);
+        if (token !== state.flyerToken) return;
+        status.textContent = 'No se pudo crear el flyer. Intenta de nuevo.';
+      }
+    }
+
+    function openFlyerModal() {
+      state.flyerWeekStart = getStartOfWeek(state.selectedDate);
+      const isAdmin = state.activeProfile?.role === 'admin';
+      const wrap = document.getElementById('flyer-worker-wrap');
+      wrap.classList.toggle('hidden', !isAdmin);
+      if (isAdmin) {
+        const sel = document.getElementById('flyer-worker');
+        sel.innerHTML = `<option value="all">Todas las trabajadoras</option>` +
+          state.config.workers.map(w => `<option value="${w.id}">${escapeHtml(w.name)}</option>`).join('');
+        sel.value = state.workerFilter !== 'all' && state.config.workers.some(w => w.id === state.workerFilter) ? state.workerFilter : 'all';
+      }
+      document.getElementById('flyer-modal').classList.remove('hidden');
+      refreshFlyer();
+    }
+
+    function flyerFileName() {
+      const slug = (state.config.salonName || 'salon').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      return `agenda-${slug}-${toLocalDateStr(state.flyerWeekStart)}.png`;
+    }
+
+    function downloadFlyer() {
+      if (!state.flyerBlob) return;
+      const url = URL.createObjectURL(state.flyerBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = flyerFileName();
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }
+
+    async function shareFlyer() {
+      if (!state.flyerBlob) return;
+      const file = new File([state.flyerBlob], flyerFileName(), { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: `Agenda de la semana - ${state.config.salonName}` });
+        } catch (err) {
+          if (err && err.name !== 'AbortError') {
+            console.error('Error compartiendo flyer:', err);
+            showToast('No se pudo compartir. Prueba con Descargar imagen', 'warning');
+          }
+        }
+      } else {
+        downloadFlyer();
+        showToast('Este navegador no permite compartir directo: se descargó la imagen', 'warning');
+      }
+    }
+
+    // =========================================================================
     // 8. MODAL DE CITA (CONECTADO A FICHAS TÉCNICAS SIN EXPONER COSTOS)
     // =========================================================================
     function openAppointmentModal(existingAppt = null, defaults = {}) {
@@ -2208,6 +2715,7 @@
         document.getElementById('appt-id').value = existingAppt.id;
         document.getElementById('appt-service-id').value = existingAppt.serviceId || '';
         document.getElementById('appt-client').value = existingAppt.clientName || '';
+        document.getElementById('appt-phone').value = existingAppt.phone || '';
         document.getElementById('appt-date').value = existingAppt.date || toLocalDateStr(state.selectedDate);
         document.getElementById('appt-start').value = existingAppt.startTime || '10:00';
         document.getElementById('appt-duration').value = existingAppt.duration || 90;
@@ -2222,6 +2730,7 @@
         document.getElementById('appt-id').value = '';
         document.getElementById('appt-service-id').value = '';
         document.getElementById('appt-client').value = '';
+        document.getElementById('appt-phone').value = '';
         document.getElementById('appt-date').value = defaults.date || toLocalDateStr(state.selectedDate);
         document.getElementById('appt-start').value = defaults.startTime || '10:00';
         document.getElementById('appt-duration').value = 90;
@@ -2315,6 +2824,7 @@
 
       const payload = {
         clientName: document.getElementById('appt-client').value.trim(),
+        phone: document.getElementById('appt-phone').value.trim(),
         workerId: document.getElementById('appt-worker-id').value,
         date: document.getElementById('appt-date').value,
         startTime: document.getElementById('appt-start').value,
@@ -3271,6 +3781,18 @@
 
       // Navegación
       document.querySelectorAll('[data-nav]').forEach(btn => btn.addEventListener('click', () => switchNav(btn.dataset.nav)));
+
+      // Flyer de la semana
+      document.getElementById('btn-open-flyer').addEventListener('click', openFlyerModal);
+      document.getElementById('btn-close-flyer').addEventListener('click', () => document.getElementById('flyer-modal').classList.add('hidden'));
+      document.getElementById('flyer-prev').addEventListener('click', () => { const d = new Date(state.flyerWeekStart); d.setDate(d.getDate() - 7); state.flyerWeekStart = d; refreshFlyer(); });
+      document.getElementById('flyer-next').addEventListener('click', () => { const d = new Date(state.flyerWeekStart); d.setDate(d.getDate() + 7); state.flyerWeekStart = d; refreshFlyer(); });
+      ['flyer-worker', 'flyer-show-service', 'flyer-full-name'].forEach(id => document.getElementById(id).addEventListener('change', refreshFlyer));
+      document.getElementById('flyer-download').addEventListener('click', downloadFlyer);
+      document.getElementById('flyer-share').addEventListener('click', shareFlyer);
+
+      // Recordatorios WhatsApp: Hoy / Mañana
+      document.querySelectorAll('.remind-day-btn').forEach(btn => btn.addEventListener('click', () => { state.reminderDay = btn.dataset.remindDay; renderReminders(); }));
 
       // Calculadora de servicios
       document.getElementById('btn-calc-clear').addEventListener('click', () => { state.calcQty = {}; renderCalculator(); });
